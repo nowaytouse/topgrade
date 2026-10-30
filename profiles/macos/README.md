@@ -2,7 +2,7 @@
 
 This optional Apple Silicon macOS profile versions the existing journal-protected updater scripts and their declared configuration. It does not replace Homebrew's Rust with PATH tricks, remove historical kegs, disable errors, or claim that a fork can make unavailable vendor services succeed.
 
-The 25 scripts, five TOML files and two npm security patch packages are covered by `manifest.json`. The original transaction/recovery implementations remain intact. The fork updater tracks this fork's main branch, and the built-in Helm step uses the typed `[helm].repository_updater` path to avoid an extra shell owner. Homebrew Topgrade remains pinned as a fallback. LLVM 23.1.4 remains pinned; historical LLVM HEAD is retained.
+The 25 scripts, five TOML files and two npm security patch packages are covered by `manifest.json`. The original transaction/recovery implementations remain intact. The fork updater tracks this fork's main branch, and the built-in Helm step uses the typed `[helm].repository_updater` path to avoid an extra shell owner. The fork is the sole active Topgrade installation; the former Homebrew Topgrade was backed up and uninstalled on this Mac. Binary rollback uses retained managed fork releases, independently of Homebrew. LLVM 23.1.4 remains pinned; historical LLVM HEAD is retained.
 
 ## Review and install
 
@@ -30,7 +30,7 @@ python3 profiles/macos/install.py --rollback TRANSACTION
 
 Rollback checks all destinations and backup hashes before changing anything. It refuses to overwrite later user edits or a newer profile. Newly created files are removed only when their bytes still match that transaction; unrelated files and directories remain. Original file modes and timestamps are restored. Private journals and backups live under `~/.local/state/topgrade-macos-profile/transactions/`; never commit them. `--home /absolute/test/home` is for isolated validation.
 
-Companion profile upgrades require reviewing the fork checkout and explicitly applying this installer; a binary self-update does not silently deploy new scripts or configuration. Existing target file permissions are retained in the manifest rather than made more permissive.
+This fork owns companion script source, installation and configuration through this profile. The installed `~/.local/bin` entry points are its managed runtime copies, not a second independently maintained script set. Keep these entry points because the declared configuration and transaction scripts call them. Companion profile upgrades require reviewing the fork checkout and explicitly applying this installer; a binary self-update does not silently deploy new scripts or configuration. Existing target file permissions are retained in the manifest rather than made more permissive.
 
 Installing this profile does not build or switch the Topgrade binary itself. The root workflow verifies a fork binary before switching the existing managed launcher, with its separate rollback mechanism. Do not run a second full updater while deployment or a previous update is active.
 
