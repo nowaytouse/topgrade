@@ -155,7 +155,7 @@ class NpmReferenceTests(unittest.TestCase):
         verify=namespace["verify_patch_leaves"]
         data=PROFILE/"share/npm-security"
         after=json.loads((data/"leaf-candidate-after.json").read_text())
-        verify(data/"patches",after)
+        verify(data/"node_modules",after)
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder)
             for name in ("undici","ip-address"):
@@ -167,6 +167,39 @@ class NpmReferenceTests(unittest.TestCase):
             (root/"undici/a").write_bytes(b"corrupt")
             with self.assertRaises(RuntimeError):
                 verify(root,reference)
+
+    def test_vendor_data_is_pruned_by_real_dependency_discovery(self):
+        import os
+        path=PROFILE/"bin/update-project-deps"
+        module=ast.parse(path.read_text())
+        definitions=[node for node in module.body if (
+            isinstance(node,ast.FunctionDef) and node.name in ("walk_files","topmost_dirs","dirs_with")
+        ) or (
+            isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=="SKIP_DIRS" for t in node.targets)
+        )]
+        namespace={"os":os,"Path":Path}
+        exec(compile(ast.Module(body=definitions,type_ignores=[]),str(path),"exec"),namespace)
+        vendor=PROFILE/"share/npm-security/node_modules"
+        expected={vendor/name/"package.json" for name in ("undici","ip-address")}
+        self.assertTrue(all(p.is_file() for p in expected))
+        self.assertFalse((PROFILE/"share/npm-security/patches").exists())
+        walked=set(namespace["walk_files"](PROFILE))
+        self.assertTrue(expected.isdisjoint(walked))
+        projects=namespace["dirs_with"](PROFILE,{"package.json"})
+        self.assertFalse(any(vendor==p or vendor in p.parents for p in projects))
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            (root/"package.json").write_text("{}")
+            nested=root/"node_modules/undici"
+            nested.mkdir(parents=True)
+            (nested/"package.json").write_text("{}")
+            self.assertEqual(namespace["dirs_with"](root,{"package.json"}),[root.resolve()])
+
+    def test_historical_vendor_paths_remain_valid_for_rollback(self):
+        for prefix in ("patches","node_modules"):
+            relative=f"share/npm-security/{prefix}/undici/package.json"
+            self.assertEqual(installer.mapped_destination(relative),
+                f".local/share/topgrade-macos-profile/npm-security/{prefix}/undici/package.json")
 
 if __name__=="__main__":
     unittest.main()

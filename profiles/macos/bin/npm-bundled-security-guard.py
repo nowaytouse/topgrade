@@ -16,7 +16,7 @@ base = Path.home()/".local/state/topgrade-macos-profile/npm-security"
 probe = Path.home()/".local/share/topgrade-macos-profile/npm-security"
 base.mkdir(parents=True, exist_ok=True, mode=0o700)
 live = Path("/opt/homebrew/lib/node_modules/npm")
-candidate = probe/"patches"
+candidate = probe/"node_modules"
 before = json.loads((probe/"before.json").read_text())
 after = json.loads((probe/"leaf-candidate-after.json").read_text())
 

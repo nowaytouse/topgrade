@@ -48,6 +48,7 @@ SKIP_DIRS = {
 }
 
 WATCH_NAMES = {
+    ".topgrade-dependencies.json",
     "Cargo.toml", "Cargo.lock",
     "rust-toolchain", "rust-toolchain.toml",
 
@@ -1479,7 +1480,35 @@ def git_status(repo):
     return out.strip() if rc == 0 else "<unavailable>"
 
 
+def repository_edge(repo, edge):
+    policy = repo / ".topgrade-dependencies.json"
+    try:
+        fd = os.open(policy, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except FileNotFoundError:
+        return edge
+    except OSError as error:
+        raise RuntimeError(f"Invalid repository dependency policy: {policy}") from error
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_size > 1024:
+            raise RuntimeError(f"Expected a small regular dependency policy: {policy}")
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            data = stream.read(1025)
+    finally:
+        os.close(fd)
+    if len(data) > 1024:
+        raise RuntimeError(f"Repository dependency policy exceeds 1024 bytes: {policy}")
+    try:
+        value = json.loads(data.decode("utf-8"), object_pairs_hook=lambda pairs: pairs)
+    except (UnicodeError, ValueError) as error:
+        raise RuntimeError(f"Invalid repository dependency policy JSON: {policy}") from error
+    if value != [("allow_incompatible", False)] or value[0][1] is not False:
+        raise RuntimeError(f"Expected exactly {{\"allow_incompatible\": false}}: {policy}")
+    return False
+
+
 def process_repo(repo, edge, run_dir, dry_run):
+    edge = repository_edge(repo, edge)
     surfaces = detect_surfaces(repo, edge=edge)
     unknown = unsupported(repo, surfaces)
 

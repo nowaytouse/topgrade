@@ -32,7 +32,7 @@
     {
       "source": "bin/npm-bundled-security-guard.py",
       "destination": ".local/bin/npm-bundled-security-guard.py",
-      "sha256": "7caf7a629b40612b8b466746e515affec09d2002effaf11ec4f451d5512db6ab",
+      "sha256": "98e2e2af9f12bb2860cdbad8f807effdda33e358d3a39b9a1e6ee7a2acbe20ff",
       "mode": 448,
       "adoptSha256": "9aa62113bfdd9b3cbc1f00b45cc7903875debe13f8a9d5d72f22c550ae4a9bcc"
     },
@@ -123,7 +123,7 @@
     {
       "source": "bin/update-project-deps",
       "destination": ".local/bin/update-project-deps",
-      "sha256": "f9d718c4989aac106c44eed6b88d9a1388f5d0543e0cbc67e0a359495c785696",
+      "sha256": "2d05f25a8b883ac8ecb2cd648674a27268bd3d4ac6271cfda724397cc7bab02b",
       "mode": 493,
       "adoptSha256": "f9d718c4989aac106c44eed6b88d9a1388f5d0543e0cbc67e0a359495c785696"
     },
@@ -240,1443 +240,1443 @@
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/LICENSE",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/LICENSE",
+      "source": "share/npm-security/node_modules/ip-address/LICENSE",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/LICENSE",
       "sha256": "f8d791359a50cbcac82c29cb7b0b1b889b28be76fdd35b8ee33f0f7c8704702a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/README.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/README.md",
+      "source": "share/npm-security/node_modules/ip-address/README.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/README.md",
       "sha256": "1c3da709a49481e1cede194aa713f8fe022c6cf766be278648cf0cc1a5467784",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/address-error.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/address-error.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/address-error.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/address-error.d.ts",
       "sha256": "73e37789e4fd5d3eb0e432a8967453c9334947d8545ecb28cc04c18b1e019135",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/address-error.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/address-error.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/address-error.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/address-error.js",
       "sha256": "d0bb8495a78ce2a1e2c1ad231c15b3a8146fec8c8ea32b121fcbe1e032b9cc0e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/address-error.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/address-error.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/address-error.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/address-error.js.map",
       "sha256": "96f9cb28df86d591dda4e54e48f60e6010b2a95d04ab45581d56dac0ed2ca7bd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/common.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/common.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/common.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/common.d.ts",
       "sha256": "2140b9cf083ad0b46cdc19db1acff9f582f0c8681c32a2a7b08b18259f786325",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/common.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/common.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/common.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/common.js",
       "sha256": "517ded229825391ee144cb8c0acf712e318ff1b3fa859f20f5fea971bad4a15b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/common.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/common.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/common.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/common.js.map",
       "sha256": "449c73fc075e2a24b892c06debc5e285a9534ea12fe7d4faca7022c753b0ebfd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ip-address.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ip-address.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/ip-address.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ip-address.d.ts",
       "sha256": "e8de59dc8d32ba86cacf2156465f8e54a2fdd973b3e003779c83a61413b7d086",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ip-address.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ip-address.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/ip-address.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ip-address.js",
       "sha256": "3e38a4b349282e67a811aece46e273b1b24abbba2897bea707a00170ebdfc200",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ip-address.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ip-address.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/ip-address.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ip-address.js.map",
       "sha256": "dc8de5e6f0ddb17961e7503dcae38e79674d3095edfc5b7e38e6dd0aa7575877",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv4.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv4.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv4.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv4.d.ts",
       "sha256": "49bf6f77d32ab99a82d084308f672adcaef46f7168c70f0dca7fd08d95b18c8e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv4.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv4.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv4.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv4.js",
       "sha256": "69b33990eca8bf92704c0b47843c2869daa517ee5cb7cb170c052481bcb67c90",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv4.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv4.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv4.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv4.js.map",
       "sha256": "25ab81b0b97f22f4d59324a92c234a1359bd9b287e49541a10456028a970f8da",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv6.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv6.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv6.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv6.d.ts",
       "sha256": "311f4897892d32af454fdbd4d94105218494c11e9a87e3232a1bf13447602025",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv6.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv6.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv6.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv6.js",
       "sha256": "47f28ef06d0e49a9ea0980492e95258b1bb40952f12be268cc3c1221312b5e95",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/ipv6.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/ipv6.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/ipv6.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/ipv6.js.map",
       "sha256": "2e98c85d9edff48263bb51c808d0dc15234f126d8e04ad953db727cb7a1a7973",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v4/constants.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v4/constants.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/v4/constants.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v4/constants.d.ts",
       "sha256": "be45f59e39a1eb29e642f5876b7c935bf723e11f0d5d1f453bca24d40006a7ae",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v4/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v4/constants.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/v4/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v4/constants.js",
       "sha256": "f8de9ffd2d22c3225856132439a631ff114fa1a0a91a2c16e7b51f924198db91",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v4/constants.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v4/constants.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/v4/constants.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v4/constants.js.map",
       "sha256": "40addf8670c6c50efa2481a992001f3ad4a9b154ef021312ef3d83f70ca9a5b2",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/constants.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/constants.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/constants.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/constants.d.ts",
       "sha256": "1862b3e3fa2f9344c470769ab3db1a369ff92b4ac6a4e0f124a71126c5a4b6d3",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/constants.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/constants.js",
       "sha256": "659c2a35b79e0e1a67f85bf5704446bc2439ea7fede7e99fa5b349a6094b2ce5",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/constants.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/constants.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/constants.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/constants.js.map",
       "sha256": "128b79e98fcdf097a15ce8b3a16eeafb776224f14f5879599b568f9436370603",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/helpers.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/helpers.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/helpers.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/helpers.d.ts",
       "sha256": "6f050095511244f289ccd718c8d697a9cb3e378a42a54cd24d92cfe98dcab9eb",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/helpers.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/helpers.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/helpers.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/helpers.js",
       "sha256": "80660cbe876ed3e7224268638582db8def929a53bc8822c5a5d8a0c321cca50f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/helpers.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/helpers.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/helpers.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/helpers.js.map",
       "sha256": "e19ffe4aae647122c0e86bb29776d0f2ffddf13d69223c708423807ee627809c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/regular-expressions.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/regular-expressions.d.ts",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/regular-expressions.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/regular-expressions.d.ts",
       "sha256": "b29ca73404a24e8386fe7f70f2ce5964eeec69e45b8f31dcb41fd4b873331d35",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/regular-expressions.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/regular-expressions.js",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/regular-expressions.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/regular-expressions.js",
       "sha256": "31f99f670ac43ebe9694dc84b6cc9a00eb5af08f90c0ca0d2d8c5c63e5b67415",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/dist/v6/regular-expressions.js.map",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/dist/v6/regular-expressions.js.map",
+      "source": "share/npm-security/node_modules/ip-address/dist/v6/regular-expressions.js.map",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/dist/v6/regular-expressions.js.map",
       "sha256": "ba75ab29034b94851eba5c6becf559f39da6b45bffcf0be757e2105f9b44d3a2",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/ip-address/package.json",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/ip-address/package.json",
+      "source": "share/npm-security/node_modules/ip-address/package.json",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/ip-address/package.json",
       "sha256": "74056993016e6856ed4fe8e9bcd95f630753c970e8493ff9c6c7db38ad04e9db",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/LICENSE",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/LICENSE",
+      "source": "share/npm-security/node_modules/undici/LICENSE",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/LICENSE",
       "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/README.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/README.md",
+      "source": "share/npm-security/node_modules/undici/README.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/README.md",
       "sha256": "f8c36e725c48849e82eebad6f6167d1a9d9cc2c1426418af29a13b23769f3e1f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Agent.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Agent.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Agent.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Agent.md",
       "sha256": "6cf9a18ddc0f07ccb0819db288dced8f710e58f1ae7d6d76bfb989ffce498201",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/BalancedPool.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/BalancedPool.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/BalancedPool.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/BalancedPool.md",
       "sha256": "2a6ccb2f8ec194336e342d313c437bb9f3e0634ca0d168800ea12fd6b62f4429",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/CacheStorage.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/CacheStorage.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/CacheStorage.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/CacheStorage.md",
       "sha256": "37e458d8baff658682379bf4196a9085fd7bae0aa76560a23896a9f5d447e498",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Client.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Client.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Client.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Client.md",
       "sha256": "d82f64c75abb77937ea125172819dcf1802b30324b681950def88d23f29fd1e3",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Connector.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Connector.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Connector.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Connector.md",
       "sha256": "c363feda8c4bb65f09379df7f2d0164f88336a2487b3043876c275b2d04a01ed",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/ContentType.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/ContentType.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/ContentType.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/ContentType.md",
       "sha256": "b7418622c803d210b744fa1e705505a1c62829ec95b557fbc3071cc68b4fdcbd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Cookies.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Cookies.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Cookies.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Cookies.md",
       "sha256": "1669eb09d53cac17ffaa721bb64c01b04d3e15954eafdc68ee9bdfa552ae049b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Debug.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Debug.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Debug.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Debug.md",
       "sha256": "4586368c30c64c85a6b368487c06723d58a5e2b4b8360eb0dd64b8abd130078a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/DiagnosticsChannel.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/DiagnosticsChannel.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/DiagnosticsChannel.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/DiagnosticsChannel.md",
       "sha256": "986d7e3435a5f2942b37fb87ae54b59ed1770731b9b3925b4208184c62d78cc9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/DispatchInterceptor.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/DispatchInterceptor.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/DispatchInterceptor.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/DispatchInterceptor.md",
       "sha256": "3b5b39f333b1c3c405d1515bf1305478891f399ffb723aa759efe68a5cfb40be",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Dispatcher.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Dispatcher.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Dispatcher.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Dispatcher.md",
       "sha256": "cb32a577e2e2364b0ec4bfc80ed71094a9089911864e0202ebe72f705ef2fd47",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/EnvHttpProxyAgent.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/EnvHttpProxyAgent.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/EnvHttpProxyAgent.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/EnvHttpProxyAgent.md",
       "sha256": "512b3ae7fd348df4ae3ec7b4b0d265bc4406a8113a63abfc7dc4b2f325fed24c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Errors.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Errors.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Errors.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Errors.md",
       "sha256": "20d0dd0af0d969b67001245573650a7a28369fb8252751dadc990949d9ebf30c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/EventSource.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/EventSource.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/EventSource.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/EventSource.md",
       "sha256": "4f6abf7c96d473ffb15fe5224df7bc994fe03ae22b5903dbf8bd8f6fee6a9ab6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Fetch.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Fetch.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Fetch.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Fetch.md",
       "sha256": "0c17cc35dcc4e67d01aaa7e0526a99d5bbd73fb7eaaab41250226da950821f1b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/MockAgent.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/MockAgent.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/MockAgent.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/MockAgent.md",
       "sha256": "a4c9d4ebacb7809e97222e96d00b21bee60c36561100870f26ac3567431f8c81",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/MockClient.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/MockClient.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/MockClient.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/MockClient.md",
       "sha256": "41298451fbb43c0290386b7b0cd8e2336a2e7f3d8587f18cf674445ab95a3a1c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/MockErrors.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/MockErrors.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/MockErrors.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/MockErrors.md",
       "sha256": "862b81346856a128b577cb7825500cb5b09095203f97f6e01dcb3a583b50947b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/MockPool.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/MockPool.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/MockPool.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/MockPool.md",
       "sha256": "e2c99fb959c6706a6aaa4643e0432b634ee1358a83c7cd30ea75e2badd9a852a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Pool.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Pool.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Pool.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Pool.md",
       "sha256": "cb25bc88b8f381c8f8cfaa52fce333146b85e614c808611a139594888480f112",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/PoolStats.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/PoolStats.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/PoolStats.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/PoolStats.md",
       "sha256": "d143e045fcd7c3d3c67ea04dd34baff4a0290bbe7c92fe940a41e1696513ed5e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/ProxyAgent.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/ProxyAgent.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/ProxyAgent.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/ProxyAgent.md",
       "sha256": "980712e8cbdeed1c30a79873f83a0143d8a2c035ed79c6e34dfabb3973cfdebf",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/RedirectHandler.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/RedirectHandler.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/RedirectHandler.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/RedirectHandler.md",
       "sha256": "4d9def1d8620827ac89fdf0101c40c2d4b2599758b66d4f8d2a5cfe69f65f064",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/RetryAgent.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/RetryAgent.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/RetryAgent.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/RetryAgent.md",
       "sha256": "5b585108b2f7b95db18afbae234d3c4b2ec37ae2c9eae7c495c48468cef154fc",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/RetryHandler.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/RetryHandler.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/RetryHandler.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/RetryHandler.md",
       "sha256": "9208c40a9ddd00f79b5964bf59c6c85aa3391fd5d0b9c69741524d001073287a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/Util.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/Util.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/Util.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/Util.md",
       "sha256": "c61bedd14de49978130b2a390bde9e83b79c7ed34a0decdb4a3c4eec1f925fb9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/WebSocket.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/WebSocket.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/WebSocket.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/WebSocket.md",
       "sha256": "aef4ee1140c0326962907d719279e3728ec9777e24428f2fd20a545758d28392",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/api/api-lifecycle.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/api/api-lifecycle.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/api/api-lifecycle.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/api/api-lifecycle.md",
       "sha256": "b2492da7af8ece58cac58a84883d09fd8e5f92569344b8efcd57f8a68e404f02",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/best-practices/client-certificate.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/best-practices/client-certificate.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/best-practices/client-certificate.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/best-practices/client-certificate.md",
       "sha256": "f04bc4291917e454069c88f1a81326f0935a205930034930c01096b5d37e566b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/best-practices/mocking-request.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/best-practices/mocking-request.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/best-practices/mocking-request.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/best-practices/mocking-request.md",
       "sha256": "869f18e979b17c9bbefe3008912065355ba404720f59eb38ff5de8ac7b82915c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/best-practices/proxy.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/best-practices/proxy.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/best-practices/proxy.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/best-practices/proxy.md",
       "sha256": "0b7edcbf4991f03699687ed0298f1583b6bc6f58c8b80ff4942be785fc98608c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/docs/docs/best-practices/writing-tests.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/docs/docs/best-practices/writing-tests.md",
+      "source": "share/npm-security/node_modules/undici/docs/docs/best-practices/writing-tests.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/docs/docs/best-practices/writing-tests.md",
       "sha256": "4fb1816618ab3a119e872f23d8d9d46c3521f9aea055dd5bc75c58847892641f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/index-fetch.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/index-fetch.js",
+      "source": "share/npm-security/node_modules/undici/index-fetch.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/index-fetch.js",
       "sha256": "3b99e505f9dc3ac97b44fb6bd77b67987b2e9c4ec936270971326de28993de8c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/index.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/index.d.ts",
+      "source": "share/npm-security/node_modules/undici/index.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/index.d.ts",
       "sha256": "299fd0c281633d8dbfbe5f44c5f2850fe37392da6fd3b9cca3cb4e10cda16432",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/index.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/index.js",
+      "source": "share/npm-security/node_modules/undici/index.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/index.js",
       "sha256": "c42e75dd4f2dfa00b8bafa7b85b8594ab367b2d8d22dcf72a67585f1f5ee41ee",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/abort-signal.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/abort-signal.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/abort-signal.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/abort-signal.js",
       "sha256": "940054d80e9a82a4dda26fbe0b26ec3fb8ef2d283ab1b74febc4c698dfb40c5f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/api-connect.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/api-connect.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/api-connect.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/api-connect.js",
       "sha256": "33229ace71010bfb1c2df21c0751d96042ec7c9d1e6b8ae3d5067fec4936e86f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/api-pipeline.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/api-pipeline.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/api-pipeline.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/api-pipeline.js",
       "sha256": "1fff148ec69841c6a31c12350f9afe788a72fcb9c42a4082462987c31b345eb1",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/api-request.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/api-request.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/api-request.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/api-request.js",
       "sha256": "dba2cdb7c724d7898cc11c4f2635e7cfbbdeadbf141b8b07d063c41782b126b8",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/api-stream.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/api-stream.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/api-stream.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/api-stream.js",
       "sha256": "b2687896c2a99be3ef9e6d9d4befde55158a4336eb39b5081b600aa360215145",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/api-upgrade.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/api-upgrade.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/api-upgrade.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/api-upgrade.js",
       "sha256": "efa17f0b83ad86f8135b1576dab81fe6b7983b29dd1223d092c0f734bd6498bd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/index.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/index.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/index.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/index.js",
       "sha256": "a7b4b74ea6b81b2401f8659c138df54fd3f2c45450741682c026abb4cf133096",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/readable.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/readable.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/readable.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/readable.js",
       "sha256": "7c1ab798eb492b3b5fb55425d84d9ee115bfc39e763b4c64befeaf30937c8434",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/api/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/api/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/api/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/api/util.js",
       "sha256": "8fb5cca52bdf03160ca7b4a41eab2088c6d4213240aa7f70425b3c71102df9c3",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/connect.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/connect.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/connect.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/connect.js",
       "sha256": "24ed02e5a7080d7873ffc0b02870393d87529f7a8b0a6783f59a00a14bd8aabb",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/constants.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/constants.js",
       "sha256": "962e2278404f3c0b0d45bf67eb1966c39dc33c04b89e2e9f4a955ac057272b82",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/diagnostics.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/diagnostics.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/diagnostics.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/diagnostics.js",
       "sha256": "b07763ed42b4463f95fad4bc042e04c894587ce2ed52fb3c7ebd22d77f8d005c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/errors.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/errors.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/errors.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/errors.js",
       "sha256": "aaca1e0952616cb68db77153f24e1c2a7da3ee54d699b507f40d88eecc62b061",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/request.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/request.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/request.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/request.js",
       "sha256": "79c1d8234b602f1ccae9f38517851fc0cb7d67f7b4a20217d3a297016dbb863a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/symbols.js",
       "sha256": "c27f3539f763111179c821a91e391025ffc5a19bdadaf33dda85c2b6ccd796f4",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/tree.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/tree.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/tree.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/tree.js",
       "sha256": "7f2625127a44664c9fd531c0938b00a8fbac467e2ad15e65dbef48cb5029a385",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/core/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/core/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/core/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/core/util.js",
       "sha256": "ebbaa1263b06489bc467b6b62d95b247f38006f94d17131482ea03685ef18da9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/agent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/agent.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/agent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/agent.js",
       "sha256": "c14647fb924405a51594b2b27cf93612862673cb212bcc179c10cfcd3e687635",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/balanced-pool.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/balanced-pool.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/balanced-pool.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/balanced-pool.js",
       "sha256": "6beac1850ec97449ab72f87a623547c0152acf27b65fe3faa432a3f00782209d",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/client-h1.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/client-h1.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/client-h1.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/client-h1.js",
       "sha256": "e219f9a7f00999c33be0b847ed77d108419e7dd359844290f9d3acc30aef037b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/client-h2.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/client-h2.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/client-h2.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/client-h2.js",
       "sha256": "f7580bce454423f36b8a63e459a99b49ab7b9039a61ce4841e363e3f91324415",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/client.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/client.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/client.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/client.js",
       "sha256": "9de5bb48be1f468281a43a8e309b01bfebd6ce400ada1f1e14404090b10fc728",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/dispatcher-base.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/dispatcher-base.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/dispatcher-base.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/dispatcher-base.js",
       "sha256": "0d0adf1598f09e7b75201df06c1b8d1269dc616c9664679e838c52aed31b9357",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/dispatcher.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/dispatcher.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/dispatcher.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/dispatcher.js",
       "sha256": "e76ad1e0766f839303d2208843df639a642edd0c218cf3bb468af6d740f70d78",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/env-http-proxy-agent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/env-http-proxy-agent.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/env-http-proxy-agent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/env-http-proxy-agent.js",
       "sha256": "96a0cbb0dc557f76e2d11c9969d8b5e840a5565bb6501dcbed2f7406be37fa5e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/fixed-queue.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/fixed-queue.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/fixed-queue.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/fixed-queue.js",
       "sha256": "244a0b8b734395490f13430449e06754ec6ea7b102447d6b77e8eef3cb20c979",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/pool-base.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/pool-base.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/pool-base.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/pool-base.js",
       "sha256": "5263c1112ec9be6d7cf1548f916c6ed903379db97fb0eb6d4a7a7dd397134fc6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/pool-stats.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/pool-stats.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/pool-stats.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/pool-stats.js",
       "sha256": "b77bfdc27744e464ec58099982b0b1c4c2d5926e5c8e3929bf1321772b29d593",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/pool.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/pool.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/pool.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/pool.js",
       "sha256": "5ccc278d8e34fad79d6ba2b656a73da0c6cc2225715522021c1fb4586633990b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/proxy-agent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/proxy-agent.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/proxy-agent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/proxy-agent.js",
       "sha256": "3bf00deb1018c397adb7049a85d6a6d9a116f639441a4ac0b6b762976f5d13a9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/dispatcher/retry-agent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/dispatcher/retry-agent.js",
+      "source": "share/npm-security/node_modules/undici/lib/dispatcher/retry-agent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/dispatcher/retry-agent.js",
       "sha256": "465e9429750441852cb0ed19bd669dbe2eca2b531ce6966040551a9b6550ae30",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/global.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/global.js",
+      "source": "share/npm-security/node_modules/undici/lib/global.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/global.js",
       "sha256": "2743c8128f9004d7d82dfae10cdcae10b27806b7c5d378b94f2c50651f3b6dbc",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/handler/decorator-handler.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/handler/decorator-handler.js",
+      "source": "share/npm-security/node_modules/undici/lib/handler/decorator-handler.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/handler/decorator-handler.js",
       "sha256": "56e55b0a2683669007c43454030b2d488f5577aeb693ef7d4b74a3b03b89fb12",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/handler/redirect-handler.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/handler/redirect-handler.js",
+      "source": "share/npm-security/node_modules/undici/lib/handler/redirect-handler.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/handler/redirect-handler.js",
       "sha256": "35945253f190fd6149839d9b4c4d6d99d966fca3da64fc84d803aa071fb96fac",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/handler/retry-handler.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/handler/retry-handler.js",
+      "source": "share/npm-security/node_modules/undici/lib/handler/retry-handler.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/handler/retry-handler.js",
       "sha256": "1e7b8f46a177b5244d7abaab3bd7da9d423cebfffbafc33a0e9c81b63f58447a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/dns.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/dns.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/dns.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/dns.js",
       "sha256": "bca388666ef90bc4a89f125c786af07760e55c2fc8f7510bbe2f647d10b59c86",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/dump.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/dump.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/dump.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/dump.js",
       "sha256": "3bfd2bfbd074fd23e1867b5d14962b065bdfb43ab8c83d30a4108939be651cf8",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/redirect-interceptor.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/redirect-interceptor.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/redirect-interceptor.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/redirect-interceptor.js",
       "sha256": "dc4f2739771211d5dd3940d6b41abcced797de6cce9431665037ace2149ab3d9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/redirect.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/redirect.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/redirect.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/redirect.js",
       "sha256": "377a3f459d5652d2668d49b0668cf259e537745abb9174ad0677ecae7fb31427",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/response-error.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/response-error.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/response-error.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/response-error.js",
       "sha256": "aece2c6eee6314919df653a0c5bcd89f9d5243241c11186546455af26722e57d",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/interceptor/retry.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/interceptor/retry.js",
+      "source": "share/npm-security/node_modules/undici/lib/interceptor/retry.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/interceptor/retry.js",
       "sha256": "488cf270ae143cc13a6ecf82ba523314fdbb17fd9ee08677c4488d4410f047c3",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/llhttp/.gitkeep",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/llhttp/.gitkeep",
+      "source": "share/npm-security/node_modules/undici/lib/llhttp/.gitkeep",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/llhttp/.gitkeep",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/llhttp/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/llhttp/constants.js",
+      "source": "share/npm-security/node_modules/undici/lib/llhttp/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/llhttp/constants.js",
       "sha256": "3cba0763867e5e3753f3efbf22853e42b3da26e2353ff77d06156d923eb4d8bd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/llhttp/llhttp-wasm.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/llhttp/llhttp-wasm.js",
+      "source": "share/npm-security/node_modules/undici/lib/llhttp/llhttp-wasm.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/llhttp/llhttp-wasm.js",
       "sha256": "f6e22d23d57d86c1e613ce26ef1eb4e997e81663987a8127eef758ce5f20a655",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/llhttp/llhttp_simd-wasm.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/llhttp/llhttp_simd-wasm.js",
+      "source": "share/npm-security/node_modules/undici/lib/llhttp/llhttp_simd-wasm.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/llhttp/llhttp_simd-wasm.js",
       "sha256": "1b8fa2e4e50e4f5774dde59855f0d34d112ef9900caf97aea4b2e6ec4ca9e3f1",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/llhttp/utils.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/llhttp/utils.js",
+      "source": "share/npm-security/node_modules/undici/lib/llhttp/utils.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/llhttp/utils.js",
       "sha256": "0c72c339551b7e963cada1733f0d95e059d340e0f77c5d704c3e2e5989dc86a3",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-agent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-agent.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-agent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-agent.js",
       "sha256": "746d3abcf9f8e352549833e1a18e8880989e4f6541b23f90491adfa148a49663",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-client.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-client.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-client.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-client.js",
       "sha256": "e5fa1ccc3f1025276166affcca04f04e6659631b9f106019fdd95f264061d792",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-errors.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-errors.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-errors.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-errors.js",
       "sha256": "30c997cff400a8cf3f0a9b2eadeb1923c6506a9743ba892f14fae741c49b9840",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-interceptor.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-interceptor.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-interceptor.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-interceptor.js",
       "sha256": "0794f09f20e76f5b4d74d603e6557fe5462d09e8a7c307306bfc1efcfbbc460e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-pool.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-pool.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-pool.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-pool.js",
       "sha256": "9526cb9c0a989987cdde04e15647e8fab21166b711a6b6dba4ffcc781d8045f0",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-symbols.js",
       "sha256": "2bb0167aca64371dc350fa9ee1077018517d3fd43f0d48ed068cdfc3e0530950",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/mock-utils.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/mock-utils.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/mock-utils.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/mock-utils.js",
       "sha256": "7979b322a2c7a47cf864eee799febae6c33cfc923d270e1d19e1e5714f698511",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/pending-interceptors-formatter.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/pending-interceptors-formatter.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/pending-interceptors-formatter.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/pending-interceptors-formatter.js",
       "sha256": "9d3737f40ba601fd7a9c6dd28a328e6797686ff08da712dcd0a0f011d5639f8d",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/mock/pluralizer.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/mock/pluralizer.js",
+      "source": "share/npm-security/node_modules/undici/lib/mock/pluralizer.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/mock/pluralizer.js",
       "sha256": "d5d71bf11a309f2368693f40737a011ae59734ea1b45c27678c6d49f9888ef33",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/util/timers.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/util/timers.js",
+      "source": "share/npm-security/node_modules/undici/lib/util/timers.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/util/timers.js",
       "sha256": "bea70a68b7d31ea58611892c54795399d6bd3bcc4aca635081d40a5b4a564f7a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cache/cache.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cache/cache.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cache/cache.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cache/cache.js",
       "sha256": "4f6c667a0566e1e916dbfa23a3ede274d151433c073c131e058df42bc6e5e504",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cache/cachestorage.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cache/cachestorage.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cache/cachestorage.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cache/cachestorage.js",
       "sha256": "bf271e7d5bd3b6e3adfd7b0a092490bf17ae10dcb396f35efd3c28f7fd496567",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cache/symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cache/symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cache/symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cache/symbols.js",
       "sha256": "499a6cdb7a77eb92655c929145116c0724e81caa6c351f23232f55dff05e073d",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cache/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cache/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cache/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cache/util.js",
       "sha256": "638d5c2424a730e6d2400ac518765b3fc9b50e2b3816b65fb7b46f93c66a5930",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cookies/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cookies/constants.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cookies/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cookies/constants.js",
       "sha256": "85a24ae49eb5954e15363049bbc68967f01aae7260246daa3f49ad375429acb4",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cookies/index.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cookies/index.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cookies/index.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cookies/index.js",
       "sha256": "55f0e191558a019507374c918a08060ca5b9d5810b1bc4901cf5dd2dd5293ff5",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cookies/parse.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cookies/parse.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cookies/parse.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cookies/parse.js",
       "sha256": "550f060bdae6ac7d0215be1e21a9e95a439486f58883c49c38ed18b8c4aebbe4",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/cookies/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/cookies/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/cookies/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/cookies/util.js",
       "sha256": "51941b2fb0a6f29e389b91236050b1fc4bdaf57051ae53145767219a9d3c5f09",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/eventsource/eventsource-stream.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/eventsource/eventsource-stream.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/eventsource/eventsource-stream.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/eventsource/eventsource-stream.js",
       "sha256": "f66f223caa75b1c611b3595694e264cb5231384dabfde7472292efb85efef7c1",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/eventsource/eventsource.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/eventsource/eventsource.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/eventsource/eventsource.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/eventsource/eventsource.js",
       "sha256": "b8924d4dd31a126a33a75435a16aa7a6589c0f26e045582e4e6226aa548cc401",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/eventsource/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/eventsource/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/eventsource/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/eventsource/util.js",
       "sha256": "23db924c5eed1b4421811da40e78ed6dc754cdf165cc8eb6e9f1b9cf1dc424d7",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/LICENSE",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/LICENSE",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/LICENSE",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/LICENSE",
       "sha256": "a21d6c8d3fc631198b97e57584697f7f9c37805c71c6cf9a12e4442b40394b88",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/body.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/body.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/body.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/body.js",
       "sha256": "edc925847d383b21cc286c27972075aea26cc52d2c87c0bc5bc9d0d3aa1a3543",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/constants.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/constants.js",
       "sha256": "d6c377a0ce91b947a1299845516886be525f474aedad65c7dde35f2c9301b97e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/data-url.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/data-url.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/data-url.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/data-url.js",
       "sha256": "9593cb61a2844fabc1849f6343c0fbb132d4ab885195ee1a87eeee54579dcaaa",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/dispatcher-weakref.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/dispatcher-weakref.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/dispatcher-weakref.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/dispatcher-weakref.js",
       "sha256": "9f34f1dda099666ef510e41399c00c66da21d0482780aa82aaf6478acd687479",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/file.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/file.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/file.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/file.js",
       "sha256": "29a79309900579667fb5df3a0629f508bde34464f2c08a29990de2fea1b21078",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/formdata-parser.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/formdata-parser.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/formdata-parser.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/formdata-parser.js",
       "sha256": "a99daed7968ae5031a50d020a881a97afbeb613fa1db13a98561ce8e6b8f4384",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/formdata.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/formdata.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/formdata.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/formdata.js",
       "sha256": "2755aa6653a131084c3c9d8123a8556a5bb4de4102cbe291b7134a1975faa9d8",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/global.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/global.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/global.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/global.js",
       "sha256": "6b38813b82ec8d5002009640515d35f83ab96d4f8e0066d71fae89324079a289",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/headers.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/headers.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/headers.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/headers.js",
       "sha256": "8492ae2455a524b46017cb74e6a7353d63ea705914a4fb28e718b7b6d2de4470",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/index.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/index.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/index.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/index.js",
       "sha256": "3e0b6aa3b09d5265f5cdebe5196376a809178776aed52eeba73788341df57a48",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/request.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/request.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/request.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/request.js",
       "sha256": "eed7953967abb30acad4c7ae54417e61d2c53bd3393a6f1929270865724345ad",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/response.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/response.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/response.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/response.js",
       "sha256": "103a92a5e44ee47822ad5892b6134b8b237fad505a4ccf9fb4d2963af1c49fb6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/symbols.js",
       "sha256": "dd88b1385665e69fca2465f33dc99d4f69919441555e5504ce65b55019e077a7",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/util.js",
       "sha256": "85ee9fbb5c6083b521ac108959dddc4029e3549350da5e4ec10bfc2077846039",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fetch/webidl.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fetch/webidl.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fetch/webidl.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fetch/webidl.js",
       "sha256": "c1197b314e62c8dc9e1cce920b59679474ccb2e74dc4779a7d33ee1ecd0c91d0",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fileapi/encoding.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fileapi/encoding.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fileapi/encoding.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fileapi/encoding.js",
       "sha256": "1104cabac55bb11fb9ce5127017f7c1b5dd816e63e2ec1a1c8eb40d7dfb4ad20",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fileapi/filereader.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fileapi/filereader.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fileapi/filereader.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fileapi/filereader.js",
       "sha256": "758f05d98581fa73a36df3efde7db45b209df05f9fbbdcd21ab90cd527c2feb2",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fileapi/progressevent.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fileapi/progressevent.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fileapi/progressevent.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fileapi/progressevent.js",
       "sha256": "a4efded37a5b1bf78ae1a3c9a09c90615e24f1b8fcaed5310a317f43bd40ffc6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fileapi/symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fileapi/symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fileapi/symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fileapi/symbols.js",
       "sha256": "ac1dd1e588f039bee4917ff017e32af5eb727d68683d869acf1479828480c371",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/fileapi/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/fileapi/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/fileapi/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/fileapi/util.js",
       "sha256": "7fe9d4d9e553ff05bbd5fe63e9c2d1d75acf4e47291936a513bcab712a1e907b",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/connection.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/connection.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/connection.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/connection.js",
       "sha256": "8d39465ab30bccbfc599f00ab276fdfdbad43913ca881083aafe8ba34f2ff7d1",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/constants.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/constants.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/constants.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/constants.js",
       "sha256": "55527aeddaa0d2ca2a9b57080be9ee3113f674dce45069cf6d494d5149f8767c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/events.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/events.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/events.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/events.js",
       "sha256": "156e4faea9fae2665344d5af1d08efb0cb6dc1deb96a787879e411fd80d55d2d",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/frame.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/frame.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/frame.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/frame.js",
       "sha256": "a60454364e7f2ec5db26c6ff03d20262d35fb2f1a0b2f6d625fd644be21cb118",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/permessage-deflate.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/permessage-deflate.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/permessage-deflate.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/permessage-deflate.js",
       "sha256": "da8d8dc29515bce2ba4def5c3f811f8644eeb5d4819bc521d5811fbbdda4afb7",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/receiver.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/receiver.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/receiver.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/receiver.js",
       "sha256": "b7d86ff5da81b4debfaaf84cbbf02c0331625c966aa2530d9819697c8f11f2a6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/sender.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/sender.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/sender.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/sender.js",
       "sha256": "147f118843cdbbb884b39b2f4644cbec6671a530018e3baedafadf04339e4dcd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/symbols.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/symbols.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/symbols.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/symbols.js",
       "sha256": "8b0fefd6a165e147061da314db2f1d5f7e870b6720835e540d0be3376c6132fa",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/util.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/util.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/util.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/util.js",
       "sha256": "0a391dc293d65810a39c9c336904e98956fba902eb4402e55556e3dbe151ac46",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/lib/web/websocket/websocket.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/lib/web/websocket/websocket.js",
+      "source": "share/npm-security/node_modules/undici/lib/web/websocket/websocket.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/lib/web/websocket/websocket.js",
       "sha256": "9b3173f0a96feda58e36293002f2341ca3c1c3340e9e1e070f149a4dcfe28f8c",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/package.json",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/package.json",
+      "source": "share/npm-security/node_modules/undici/package.json",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/package.json",
       "sha256": "df5d9c505f8db601e62bf67eb835117985e549cfbbb61c4c1a84c55d57ab3532",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/scripts/strip-comments.js",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/scripts/strip-comments.js",
+      "source": "share/npm-security/node_modules/undici/scripts/strip-comments.js",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/scripts/strip-comments.js",
       "sha256": "dda77b813446eda232f84105181302ab39e3e58c8d92d3350ac1ce3eace5f4c4",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/README.md",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/README.md",
+      "source": "share/npm-security/node_modules/undici/types/README.md",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/README.md",
       "sha256": "c8cced6ec588c55b07e35733258cb7d6b63e3426ee7490aa9267aab4bda0fb20",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/agent.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/agent.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/agent.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/agent.d.ts",
       "sha256": "4893a895ea92c85345017a04ed427cbd6a1710453338df26881a6019432febdd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/api.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/api.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/api.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/api.d.ts",
       "sha256": "0db18c6e78ea846316c012478888f33c11ffadab9efd1cc8bcc12daded7a60b6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/balanced-pool.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/balanced-pool.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/balanced-pool.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/balanced-pool.d.ts",
       "sha256": "ba7bc87d01492633cb5a0e5da8a4a42a1c86270e7b3d2dea5d156828a84e4882",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/cache.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/cache.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/cache.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/cache.d.ts",
       "sha256": "c46e079fe54c76f95c67fb89081b3e399da2c7d109e7dca8e4b58d83e332e605",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/client.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/client.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/client.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/client.d.ts",
       "sha256": "49dd22c2c1f13ac7f0a729e1e8e38f0d1913388cdec842af0bb20a2388b6506e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/connector.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/connector.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/connector.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/connector.d.ts",
       "sha256": "c6fd2c5a395f2432786c9cb8deb870b9b0e8ff7e22c029954fabdd692bff6195",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/content-type.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/content-type.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/content-type.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/content-type.d.ts",
       "sha256": "2e85db9e6fd73cfa3d7f28e0ab6b55417ea18931423bd47b409a96e4a169e8e6",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/cookies.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/cookies.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/cookies.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/cookies.d.ts",
       "sha256": "89167d696a849fce5ca508032aabfe901c0868f833a8625d5a9c6e861ef935d2",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/diagnostics-channel.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/diagnostics-channel.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/diagnostics-channel.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/diagnostics-channel.d.ts",
       "sha256": "4732aec92b20fb28c5fe9ad99521fb59974289ed1e45aecb282616202184064f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/dispatcher.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/dispatcher.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/dispatcher.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/dispatcher.d.ts",
       "sha256": "7f182617db458e98fc18dfb272d40aa2fff3a353c44a89b2c0ccb3937709bfb5",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/env-http-proxy-agent.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/env-http-proxy-agent.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/env-http-proxy-agent.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/env-http-proxy-agent.d.ts",
       "sha256": "24c6a117721e606c9984335f71711877293a9651e44f59f3d21c1ea0856f9cc9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/errors.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/errors.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/errors.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/errors.d.ts",
       "sha256": "a5579f898b9e47423f675bdadf4148222f28c08d2c906c42ecc8b8ef4c897dba",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/eventsource.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/eventsource.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/eventsource.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/eventsource.d.ts",
       "sha256": "8bd86b8e8f6a6aa6c49b71e14c4ffe1211a0e97c80f08d2c8cc98838006e4b88",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/fetch.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/fetch.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/fetch.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/fetch.d.ts",
       "sha256": "c464d66b20788266e5353b48dc4aa6bc0dc4a707276df1e7152ab0c9ae21fad8",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/file.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/file.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/file.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/file.d.ts",
       "sha256": "25c8056edf4314820382a5fdb4bb7816999acdcb929c8f75e3f39473b87e85bc",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/filereader.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/filereader.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/filereader.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/filereader.d.ts",
       "sha256": "317e63deeb21ac07f3992f5b50cdca8338f10acd4fbb7257ebf56735bf52ab00",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/formdata.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/formdata.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/formdata.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/formdata.d.ts",
       "sha256": "78d0d27c130d35c60b5e5566c9f1e5be77caf39804636bc1a40133919a949f21",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/global-dispatcher.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/global-dispatcher.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/global-dispatcher.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/global-dispatcher.d.ts",
       "sha256": "cadc8aced301244057c4e7e73fbcae534b0f5b12a37b150d80e5a45aa4bebcbd",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/global-origin.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/global-origin.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/global-origin.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/global-origin.d.ts",
       "sha256": "385aab901643aa54e1c36f5ef3107913b10d1b5bb8cbcd933d4263b80a0d7f20",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/handlers.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/handlers.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/handlers.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/handlers.d.ts",
       "sha256": "11396ed8a44c02ab9798b7dca436009f866e8dae3c9c25e8c1fbc396880bf1bb",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/header.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/header.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/header.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/header.d.ts",
       "sha256": "5929864ce17fba74232584d90cb721a89b7ad277220627cc97054ba15a98ea8f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/index.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/index.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/index.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/index.d.ts",
       "sha256": "bf67d53d168abc1298888693338cb82854bdb2e69ef83f8a0092093c2d562107",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/interceptors.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/interceptors.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/interceptors.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/interceptors.d.ts",
       "sha256": "d072cb61b086eeae042c45d85ea553a03b123d3e27dbac911faa1a695f5d6752",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/mock-agent.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/mock-agent.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/mock-agent.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/mock-agent.d.ts",
       "sha256": "13f6f39e12b1518c6650bbb220c8985999020fe0f21d818e28f512b7771d00f9",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/mock-client.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/mock-client.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/mock-client.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/mock-client.d.ts",
       "sha256": "9b5369969f6e7175740bf51223112ff209f94ba43ecd3bb09eefff9fd675624a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/mock-errors.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/mock-errors.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/mock-errors.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/mock-errors.d.ts",
       "sha256": "24515859bc0b836719105bb6cc3d68255042a9f02a6022b3187948b204946bd2",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/mock-interceptor.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/mock-interceptor.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/mock-interceptor.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/mock-interceptor.d.ts",
       "sha256": "c21dc52e277bcfc75fac0436ccb75c204f9e1b3fa5e12729670910639f27343e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/mock-pool.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/mock-pool.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/mock-pool.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/mock-pool.d.ts",
       "sha256": "4fe9e626e7164748e8769bbf74b538e09607f07ed17c2f20af8d680ee49fc1da",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/patch.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/patch.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/patch.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/patch.d.ts",
       "sha256": "615ba88d0128ed16bf83ef8ccbb6aff05c3ee2db1cc0f89ab50a4939bfc1943f",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/pool-stats.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/pool-stats.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/pool-stats.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/pool-stats.d.ts",
       "sha256": "9670d44354bab9d9982eca21945686b5c24a3f893db73c0dae0fd74217a4c219",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/pool.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/pool.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/pool.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/pool.d.ts",
       "sha256": "0b8a9268adaf4da35e7fa830c8981cfa22adbbe5b3f6f5ab91f6658899e657a7",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/proxy-agent.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/proxy-agent.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/proxy-agent.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/proxy-agent.d.ts",
       "sha256": "4a1d973d2c93128508df27876bcaeafb2d5b2e3cf6e84092b6fc8608939b1287",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/readable.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/readable.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/readable.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/readable.d.ts",
       "sha256": "763fe0f42b3d79b440a9b6e51e9ba3f3f91352469c1e4b3b67bfa4ff6352f3f4",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/retry-agent.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/retry-agent.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/retry-agent.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/retry-agent.d.ts",
       "sha256": "405822be75ad3e4d162e07439bac80c6bcc6dbae1929e179cf467ec0b9ee4e2e",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/retry-handler.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/retry-handler.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/retry-handler.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/retry-handler.d.ts",
       "sha256": "aa5524e0509c2168c9493604acf51ef97d2027f03f3b38da097802d3aa719dc8",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/util.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/util.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/util.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/util.d.ts",
       "sha256": "bd0532fd6556073727d28da0edfd1736417a3f9f394877b6d5ef6ad88fba1d1a",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/webidl.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/webidl.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/webidl.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/webidl.d.ts",
       "sha256": "99c42860a78963ee66048ef3536dbd9eb59858e6a06f2feba845105ed411e658",
       "mode": 420,
       "adoptSha256": null
     },
     {
-      "source": "share/npm-security/patches/undici/types/websocket.d.ts",
-      "destination": ".local/share/topgrade-macos-profile/npm-security/patches/undici/types/websocket.d.ts",
+      "source": "share/npm-security/node_modules/undici/types/websocket.d.ts",
+      "destination": ".local/share/topgrade-macos-profile/npm-security/node_modules/undici/types/websocket.d.ts",
       "sha256": "a4d551dbf8746780194d550c88f26cf937caf8d56f102969a110cfaed4b06656",
       "mode": 420,
       "adoptSha256": null

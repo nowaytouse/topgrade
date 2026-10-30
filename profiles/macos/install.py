@@ -58,7 +58,8 @@ def mapped_destination(source):
         return ".config/" + suffix
     if source.startswith("share/npm-security/"):
         tail = source.removeprefix("share/npm-security/")
-        if tail in REFERENCE or tail.startswith(("patches/undici/", "patches/ip-address/")):
+        if tail in REFERENCE or tail.startswith(("patches/undici/", "patches/ip-address/",
+                                                "node_modules/undici/", "node_modules/ip-address/")):
             return ".local/share/topgrade-macos-profile/npm-security/" + tail
     raise RuntimeError(f"Source outside fixed profile allowlist: {source}")
 

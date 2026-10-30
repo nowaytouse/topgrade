@@ -32,7 +32,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: nightly
           components: rustfmt, clippy
@@ -48,7 +48,7 @@ jobs:
         run: cargo +nightly clippy --locked --all-targets --all-features -- --deny warnings
 
       - name: Rust tests
-        run: cargo +nightly test --locked
+        run: cargo +nightly test --locked --all-features
 
       - name: Install current Python from a bottle
         run: brew install --force-bottle python@3.15

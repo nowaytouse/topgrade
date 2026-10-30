@@ -24,3 +24,11 @@
 /profiles/macos/.state/
 **/__pycache__/
 *.pyc
+
+# Audited guard-owned npm package data, not editable development projects.
+/profiles/macos/share/npm-security/node_modules/*
+!/profiles/macos/share/npm-security/node_modules/
+!/profiles/macos/share/npm-security/node_modules/undici/
+!/profiles/macos/share/npm-security/node_modules/undici/**
+!/profiles/macos/share/npm-security/node_modules/ip-address/
+!/profiles/macos/share/npm-security/node_modules/ip-address/**

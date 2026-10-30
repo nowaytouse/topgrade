@@ -11,7 +11,6 @@ use color_eyre::eyre::Result;
 use color_eyre::eyre::bail;
 use rust_i18n::t;
 use self_update_crate::backends::github::Update;
-use self_update_crate::update::UpdateStatus;
 
 use super::terminal::{print_info, print_separator};
 use crate::execution_context::ExecutionContext;
@@ -29,7 +28,7 @@ pub fn self_update(ctx: &ExecutionContext) -> Result<()> {
         let target = self_update_crate::get_target();
         let current_version = self_update_crate::cargo_crate_version!();
         let result = Update::configure()
-            .repo_owner("topgrade-rs")
+            .repo_owner("nowaytouse")
             .repo_name("topgrade")
             .target(target)
             .bin_name(if cfg!(windows) { "topgrade.exe" } else { "topgrade" })
@@ -40,16 +39,16 @@ pub fn self_update(ctx: &ExecutionContext) -> Result<()> {
             .build()?
             .update_extended()?;
 
-        if let UpdateStatus::Updated(release) = &result {
+        if let Some(release) = result.updated_release() {
             println!(
                 "{}",
                 t!(
                     "Topgrade upgraded from {from_version} to {to_version}:\n",
                     from_version = current_version,
-                    to_version = release.version
+                    to_version = release.version()
                 )
             );
-            if let Some(body) = &release.body {
+            if let Some(body) = release.body() {
                 println!("{body}");
             }
         } else {
@@ -57,7 +56,7 @@ pub fn self_update(ctx: &ExecutionContext) -> Result<()> {
         }
 
         {
-            if result.updated() {
+            if result.is_updated() {
                 print_info(t!("Respawning..."));
                 #[expect(clippy::disallowed_methods)]
                 let mut command = Command::new(current_exe?);
