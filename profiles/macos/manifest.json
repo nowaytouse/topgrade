@@ -60,7 +60,7 @@
     {
       "source": "bin/topgrade-helm-verified",
       "destination": ".local/bin/topgrade-helm-verified",
-      "sha256": "fc7f5822d3a7c5da35f028cf5b0c2376f088e7f411b08b8f8870b4677183c4a7",
+      "sha256": "cd913a1bdf6b6de43650235c01decf8e4b463427c78aae5db4b56d155bd6d059",
       "mode": 448,
       "adoptSha256": null
     },

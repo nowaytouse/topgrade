@@ -21,7 +21,7 @@ def invoke(args):
 
 
 def regular_bytes(path):
-    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), "rb") as source:
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as source:
         before = os.fstat(source.fileno())
         if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_INDEX:
             raise ValueError("repository file is not regular or is too large")
@@ -32,7 +32,7 @@ def regular_bytes(path):
     return data
 
 
-def unchanged_public_index(repo, cache, curl):
+def unchanged_public_index(repo, cache, curl, helm):
     if repo["url"].rstrip("/") not in PUBLIC:
         return False
     index = cache / (repo["name"] + "-index.yaml")
@@ -60,6 +60,9 @@ def unchanged_public_index(repo, cache, curl):
             return False
         if regular_bytes(index) != before:
             raise ValueError("repository cache changed during verification")
+        parsed = invoke([helm, "search", "repo", "--regexp", "^" + re.escape(repo["name"]) + "/", "--output", "json"])
+        if parsed.returncode or parsed.stderr.strip() or not isinstance(json.loads(parsed.stdout), list):
+            raise ValueError("native Helm could not validate the current repository index")
         print(f"Helm {repo['name']}: CURRENT — official compressed index matches cache "
               f"(SHA256 {hashlib.sha256(before).hexdigest()})", flush=True)
         return True
@@ -104,7 +107,7 @@ def main():
         verified = False
         if curl and repo["url"].rstrip("/") in PUBLIC:
             try:
-                verified = unchanged_public_index(repo, cache, curl)
+                verified = unchanged_public_index(repo, cache, curl, helm)
             except FileNotFoundError:
                 print("Helm: cache is absent; using native updater", flush=True)
         if regular_bytes(config) != config_before:

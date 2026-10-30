@@ -1,6 +1,9 @@
 import importlib.machinery
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -42,6 +45,8 @@ class HelmVerifiedTests(unittest.TestCase):
             return SimpleNamespace(returncode=self.curl_rc, stdout="200\n" + self.final_url, stderr="")
         if args[1:3] == ["repo", "list"]:
             return SimpleNamespace(returncode=0, stdout=json.dumps([{"name": "bitnami", "url": "https://charts.bitnami.com/bitnami"}]), stderr="")
+        if args[1:3] == ["search", "repo"]:
+            return SimpleNamespace(returncode=0, stdout="[]", stderr="")
         if args[1:3] == ["env", "HELM_REPOSITORY_CACHE"]:
             return SimpleNamespace(returncode=0, stdout=str(self.cache), stderr="")
         if args[1:3] == ["env", "HELM_REPOSITORY_CONFIG"]:
@@ -92,6 +97,27 @@ class HelmVerifiedTests(unittest.TestCase):
         self.index.symlink_to(other)
         with self.assertRaises(OSError):
             self.run_main()
+        self.assertFalse(self.native_calls())
+
+    def test_fifo_is_rejected_without_blocking(self):
+        fifo = self.root / "fifo"
+        os.mkfifo(fifo)
+        code = ("import runpy,sys,pathlib; m=runpy.run_path(sys.argv[1]); "
+                "m['regular_bytes'](pathlib.Path(sys.argv[2]))")
+        result = subprocess.run([sys.executable, "-c", code, str(PATH), str(fifo)],
+                                capture_output=True, timeout=3)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(b"not regular", result.stderr)
+
+    def test_native_parser_rejects_corrupt_index(self):
+        original = self.invoke
+        def invoke(args):
+            if args[1:3] == ["search", "repo"]:
+                return SimpleNamespace(returncode=0, stdout="[]", stderr="WARNING: corrupt index")
+            return original(args)
+        with patch.object(mod, "invoke", invoke), patch.object(mod.shutil, "which", lambda name: name), patch.object(mod.sys, "argv", [str(PATH)]):
+            with self.assertRaises(ValueError):
+                mod.main()
         self.assertFalse(self.native_calls())
 
     def test_missing_cache_uses_native(self):
