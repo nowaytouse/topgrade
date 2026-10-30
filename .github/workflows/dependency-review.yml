@@ -14,8 +14,8 @@ permissions:
 
 jobs:
   dependency-review:
-    if: github.repository == 'topgrade-rs/topgrade'
-    runs-on: ubuntu-latest
+    if: github.repository == 'topgrade-rs/topgrade' || github.repository == 'nowaytouse/topgrade'
+    runs-on: ubuntu-24.04
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
