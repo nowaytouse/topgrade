@@ -1,0 +1,57 @@
+#!/bin/bash
+set -u
+
+proxy_keys=(
+  HTTP_PROXY HTTPS_PROXY ALL_PROXY
+  http_proxy https_proxy all_proxy
+)
+
+dead_local_proxy=0
+dead_desc=""
+
+for key in "${proxy_keys[@]}"; do
+    value="${!key-}"
+    [[ -z "$value" ]] && continue
+
+    host=""
+    port=""
+
+    case "$value" in
+        *://127.0.0.1:*|*://localhost:*)
+            host="${value#*://}"
+            host="${host%%:*}"
+
+            rest="${value#*://*:}"
+            port="${rest%%/*}"
+            ;;
+        127.0.0.1:*|localhost:*)
+            host="${value%%:*}"
+            port="${value##*:}"
+            ;;
+        *)
+            continue
+            ;;
+    esac
+
+    [[ "$port" =~ ^[0-9]+$ ]] || continue
+
+    if ! /usr/bin/nc -z -w 1 "$host" "$port" \
+         >/dev/null 2>&1; then
+        dead_local_proxy=1
+        dead_desc="$host:$port"
+        break
+    fi
+done
+
+if [[ "$dead_local_proxy" -eq 1 ]]; then
+    for key in "${proxy_keys[@]}"; do
+        unset "$key"
+    done
+
+    export PROXY_AUTO_FALLBACK=direct
+
+    printf '↪ proxy-auto: %s offline; using direct/VIF\n' \
+        "$dead_desc" >&2
+fi
+
+exec "$@"

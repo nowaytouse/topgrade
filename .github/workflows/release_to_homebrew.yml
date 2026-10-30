@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   homebrew-publish:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
     steps:
       - name: Bump formulae

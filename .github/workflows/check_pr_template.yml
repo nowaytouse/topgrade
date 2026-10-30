@@ -8,6 +8,7 @@ permissions: {}
 
 jobs:
   main:
+    if: github.repository == 'topgrade-rs/topgrade'
     name: Validate PR description
     runs-on: ubuntu-latest
     permissions:

@@ -1,0 +1,254 @@
+#!/bin/zsh
+
+setopt NO_UNSET
+
+# Keep the report deterministic and English regardless of system language.
+export LANG=C
+export LC_ALL=C
+
+print_line() {
+    printf "%-18s %s\n" "$1" "$2"
+}
+
+first_line() {
+    "$@" 2>&1 | head -n1
+}
+
+normalize_version() {
+    local name="$1"
+    local value="$2"
+
+    case "$name" in
+        "Topgrade")    value="${value#topgrade }" ;;
+        "Rust")        value="${value#rustc }" ;;
+        "Cargo")       value="${value#cargo }" ;;
+        "Python")      value="${value#Python }" ;;
+        "Git")         value="${value#git version }" ;;
+        "GitHub CLI")  value="${value#gh version }" ;;
+        "Claude Code") value="${value% (Claude Code)}" ;;
+        "Codex")       value="${value#codex-cli }" ;;
+        "CMake")       value="${value#cmake version }" ;;
+        "Go")          value="${value#go version }" ;;
+        "ripgrep")     value="${value#ripgrep }" ;;
+        "sing-box")    value="${value#sing-box version }" ;;
+    esac
+
+    print -r -- "$value"
+}
+
+print_version() {
+    local name="$1"
+    shift
+
+    local output
+    output=$(first_line "$@") || {
+        print_line "$name" "—"
+        return
+    }
+
+    output=$(normalize_version "$name" "$output")
+    print_line "$name" "$output"
+}
+
+# Report the active keg selected by Homebrew's opt symlink.
+# Convert Homebrew revision suffixes:
+#   HEAD-20e3671_7 -> HEAD-20e3671 (rev 7)
+brew_ver() {
+    local formula="$1"
+    local formula_prefix formula_rack active_keg value
+
+    formula_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 brew --prefix "$formula" 2>/dev/null) || return 1
+    formula_rack=$(HOMEBREW_NO_AUTO_UPDATE=1 brew --cellar "$formula" 2>/dev/null) || return 1
+    [[ -L "$formula_prefix" && -d "$formula_prefix" && -d "$formula_rack" ]] || return 1
+    active_keg="${formula_prefix:A}"
+    formula_rack="${formula_rack:A}"
+    [[ "${active_keg:h}" == "$formula_rack" ]] || return 1
+    value="${active_keg:t}"
+
+    print -r -- "$value" |
+        sed -E 's/^(HEAD-[0-9A-Fa-f]+)_([0-9]+)$/\1 (rev \2)/'
+}
+
+print_brew_only() {
+    local name="$1"
+    local formula="$2"
+    local bv
+
+    bv=$(brew_ver "$formula")
+
+    if [[ -n "$bv" ]]; then
+        print_line "$name" "$bv"
+    else
+        print_line "$name" "—"
+    fi
+}
+
+print_brew_reported() {
+    local name="$1"
+    local formula="$2"
+    local reported="$3"
+
+    local bv
+    bv=$(brew_ver "$formula")
+
+    if [[ -n "$bv" && -n "$reported" ]]; then
+        print_line "$name" "$bv | $reported"
+    elif [[ -n "$bv" ]]; then
+        print_line "$name" "$bv"
+    elif [[ -n "$reported" ]]; then
+        print_line "$name" "$reported"
+    else
+        print_line "$name" "—"
+    fi
+}
+
+printf "%-18s %s\n" "Tool" "Installed / Reported"
+printf "%-18s %s\n" "─────────────────" "────────────────────────────────────────────"
+
+command -v topgrade >/dev/null &&
+    print_version "Topgrade" topgrade --version
+
+command -v rustc >/dev/null &&
+    print_version "Rust" rustc --version
+
+command -v cargo >/dev/null &&
+    print_version "Cargo" cargo --version
+
+command -v uv >/dev/null &&
+    print_version "uv" uv --version
+
+command -v python3 >/dev/null &&
+    print_version "Python" python3 --version
+
+command -v node >/dev/null &&
+    print_version "Node.js" node --version
+
+command -v npm >/dev/null &&
+    print_version "npm" npm --version
+
+command -v pnpm >/dev/null &&
+    print_version "pnpm" pnpm --version
+
+command -v yarn >/dev/null &&
+    print_version "Yarn" yarn --version
+
+command -v deno >/dev/null &&
+    print_version "Deno" deno --version
+
+command -v git >/dev/null &&
+    print_version "Git" git --version
+
+command -v gh >/dev/null &&
+    print_version "GitHub CLI" gh --version
+
+command -v claude >/dev/null &&
+    print_version "Claude Code" claude --version
+
+CODEX="/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+
+if [[ -x "$CODEX" ]]; then
+    print_version "Codex" "$CODEX" --version
+elif command -v codex >/dev/null 2>&1; then
+    print_version "Codex" codex --version
+else
+    print_line "Codex" "—"
+fi
+
+if command -v ffmpeg >/dev/null; then
+    cv=$(
+        ffmpeg -version 2>&1 |
+        head -n1 |
+        sed -E 's/^ffmpeg version //; s/ Copyright \(c\).*//'
+    )
+    print_brew_reported "FFmpeg" "ffmpeg" "$cv"
+fi
+
+if command -v ffprobe >/dev/null; then
+    cv=$(
+        ffprobe -version 2>&1 |
+        head -n1 |
+        sed -E 's/^ffprobe version //; s/ Copyright \(c\).*//'
+    )
+    print_brew_reported "FFprobe" "ffmpeg" "$cv"
+fi
+
+if command -v cjxl >/dev/null; then
+    cv=$(cjxl --version 2>&1 | head -n1 | sed -E 's/^cjxl //')
+    print_brew_reported "JPEG XL / cjxl" "jpeg-xl" "$cv"
+fi
+
+if command -v djxl >/dev/null; then
+    cv=$(djxl --version 2>&1 | head -n1 | sed -E 's/^djxl //')
+    print_brew_reported "JPEG XL / djxl" "jpeg-xl" "$cv"
+fi
+
+if command -v avifenc >/dev/null; then
+    cv=$(
+        avifenc --version 2>&1 |
+        head -n1 |
+        sed -E 's/^Version:[[:space:]]*//'
+    )
+    print_brew_reported "libavif" "libavif" "$cv"
+else
+    print_brew_only "libavif" "libavif"
+fi
+
+if command -v magick >/dev/null; then
+    cv=$(
+        magick --version 2>&1 |
+        head -n1 |
+        sed -E '
+            s/^Version: ImageMagick[[:space:]]+//
+            s#[[:space:]]+https?://[^[:space:]]+##
+            s/\(Beta\)/Beta/
+            s/[[:space:]]+([0-9a-fA-F]{7,}):([0-9]{8})$/ | embedded \1@\2/
+        '
+    )
+    print_brew_reported "ImageMagick" "imagemagick" "$cv"
+else
+    print_brew_only "ImageMagick" "imagemagick"
+fi
+
+if command -v opencv_version >/dev/null; then
+    cv=$(opencv_version 2>&1 | head -n1)
+    print_brew_reported "OpenCV" "opencv" "$cv"
+else
+    print_brew_only "OpenCV" "opencv"
+fi
+
+if command -v llama-cli >/dev/null; then
+    cv=$(
+        llama-cli --version 2>&1 |
+        head -n1 |
+        sed -E 's/^version:[[:space:]]*//'
+    )
+    print_brew_reported "llama.cpp" "llama.cpp" "$cv"
+else
+    print_brew_only "llama.cpp" "llama.cpp"
+fi
+
+print_brew_only "libssh2" "libssh2"
+
+command -v cmake >/dev/null &&
+    print_version "CMake" cmake --version
+
+command -v ninja >/dev/null &&
+    print_version "Ninja" ninja --version
+
+command -v zig >/dev/null &&
+    print_version "Zig" zig version
+
+command -v go >/dev/null &&
+    print_version "Go" go version
+
+command -v yt-dlp >/dev/null &&
+    print_version "yt-dlp" yt-dlp --version
+
+command -v exiftool >/dev/null &&
+    print_version "ExifTool" exiftool -ver
+
+command -v rg >/dev/null &&
+    print_version "ripgrep" rg --version
+
+command -v sing-box >/dev/null &&
+    print_version "sing-box" sing-box version

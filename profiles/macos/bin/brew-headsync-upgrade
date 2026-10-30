@@ -1,0 +1,566 @@
+#!/bin/zsh
+export HOMEBREW_NO_ASK=1
+export HOMEBREW_NO_AUTO_UPDATE=1
+set -Eeuo pipefail
+
+export HOMEBREW_NO_INSTALL_FROM_API=1
+# Preserve old kegs during unattended upgrades; cleanup is a separate decision.
+export HOMEBREW_NO_INSTALL_CLEANUP=1
+
+CORE="$(brew --repo homebrew/core)"
+GGML="$CORE/Formula/g/ggml.rb"
+LLAMA="$CORE/Formula/l/llama.cpp.rb"
+
+
+# --- Durable HEAD-sync transaction ---
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/brew-headsync"
+TXN_DIR="$STATE_DIR/active"
+STAGE=""
+
+umask 077
+mkdir -p "$STATE_DIR"
+
+zmodload zsh/system || {
+    echo "ERROR: zsh/system is unavailable" >&2
+    exit 1
+}
+
+: >> "$STATE_DIR/lock"
+
+if ! zsystem flock -t 0 -f HEADSYNC_LOCK_FD "$STATE_DIR/lock"; then
+    echo "ERROR: another HEAD-sync process is running" >&2
+    exit 1
+fi
+
+recover_txn() {
+    [[ -d "$TXN_DIR" ]] || return 0
+
+    local name dest pending
+
+    echo "== Recover HEAD-sync transaction =="
+
+    # Validate both files before touching either.
+    for name in ggml.rb llama.cpp.rb; do
+        if [[ "$name" == ggml.rb ]]; then
+            dest="$GGML"
+        else
+            dest="$LLAMA"
+        fi
+
+        if [[ ! -f "$TXN_DIR/original/$name" ||
+              ! -f "$TXN_DIR/patched/$name" ]]; then
+            echo "ERROR: incomplete transaction journal: $name" >&2
+            return 1
+        fi
+
+        if [[ ! -f "$dest" || -L "$dest" ]]; then
+            echo "ERROR: unexpected Formula file: $dest" >&2
+            return 1
+        fi
+
+        if ! cmp -s "$dest" "$TXN_DIR/original/$name" &&
+           ! cmp -s "$dest" "$TXN_DIR/patched/$name"; then
+            echo "ERROR: Formula changed outside this transaction:" >&2
+            echo "  $dest" >&2
+            echo "Journal preserved; refusing to overwrite." >&2
+            return 1
+        fi
+    done
+
+    # Restore only recognized transaction changes.
+    for name in ggml.rb llama.cpp.rb; do
+        if [[ "$name" == ggml.rb ]]; then
+            dest="$GGML"
+        else
+            dest="$LLAMA"
+        fi
+
+        pending="${dest}.headsync-pending"
+
+        # This temporary path is reserved by this transaction.
+        if [[ -e "$pending" || -L "$pending" ]]; then
+            rm -f "$pending" || return 1
+        fi
+
+        if ! cmp -s "$dest" "$TXN_DIR/original/$name"; then
+            cp -p "$TXN_DIR/original/$name" "$pending" || return 1
+            mv -f "$pending" "$dest" || return 1
+        fi
+
+        if ! cmp -s "$dest" "$TXN_DIR/original/$name"; then
+            echo "ERROR: Formula restoration verification failed" >&2
+            return 1
+        fi
+    done
+
+    rm -r "$TXN_DIR" || return 1
+    echo "HEAD-sync transaction recovered"
+}
+
+# Recovery must run before parsing inherited Git configuration or checking policy.
+recover_txn || exit 1
+
+# Route ExifTool's SourceForge HEAD URL to the official author repository for child Git processes.
+# Append instead of replacing any caller-provided GIT_CONFIG_COUNT entries.
+INHERITED_GIT_CONFIG_COUNT="${GIT_CONFIG_COUNT:-0}"
+if [[ ! "$INHERITED_GIT_CONFIG_COUNT" =~ '^[0-9]{1,4}$' ]]; then
+    echo "ERROR: malformed inherited GIT_CONFIG_COUNT" >&2
+    exit 1
+fi
+GIT_CONFIG_INDEX=$((10#$INHERITED_GIT_CONFIG_COUNT))
+typeset -gx "GIT_CONFIG_KEY_${GIT_CONFIG_INDEX}=url.https://github.com/exiftool/exiftool.git.insteadOf"
+typeset -gx "GIT_CONFIG_VALUE_${GIT_CONFIG_INDEX}=https://git.code.sf.net/p/exiftool/code.git"
+export GIT_CONFIG_COUNT=$((GIT_CONFIG_INDEX + 1))
+
+cleanup_on_exit() {
+    local rc=$?
+    trap - EXIT
+
+    if [[ -n "$STAGE" && -d "$STAGE" ]]; then
+        rm -r "$STAGE" || rc=1
+    fi
+
+    if ! recover_txn; then
+        echo "ERROR: transaction recovery failed" >&2
+        rc=1
+    fi
+
+    exit "$rc"
+}
+
+trap cleanup_on_exit EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+# --- End transaction support ---
+
+assert_core_clean() {
+    local phase="$1" core_status
+    if ! core_status="$(git -C "$CORE" status --porcelain --untracked-files=all)"; then
+        echo "ERROR: cannot inspect homebrew/core status ($phase)" >&2
+        return 1
+    fi
+    if [[ -n "$core_status" ]]; then
+        echo "ERROR: homebrew/core is dirty ($phase):" >&2
+        print -r -- "$core_status" >&2
+        return 1
+    fi
+}
+
+assert_core_clean "before Homebrew update"
+
+PINNED_FORMULAE="$(brew list --formula --pinned)" || {
+    echo "ERROR: unable to enumerate pinned Homebrew formulae" >&2
+    exit 1
+}
+LLVM_PINNED=0
+while IFS= read -r formula; do
+    [[ -n "$formula" ]] || continue
+    if [[ "$formula" == llvm ]]; then
+        LLVM_PINNED=1
+        break
+    fi
+done <<< "$PINNED_FORMULAE"
+if (( ! LLVM_PINNED )); then
+    echo "ERROR: Homebrew llvm must remain pinned to preserve the Rust runtime" >&2
+    exit 1
+fi
+
+INSTALLED_FORMULAE="$(brew list --formula --full-name)" || {
+    echo "ERROR: unable to enumerate installed Homebrew formulae" >&2
+    exit 1
+}
+
+echo
+echo "== Update Rustup Nightly Topgrade HEAD =="
+"$HOME/.local/bin/topgrade-rustup-headsync" update
+
+echo "== Homebrew update =="
+
+brew update
+
+assert_core_clean "after Homebrew update"
+
+TARGET_SHA="$(
+    git ls-remote https://github.com/ggml-org/llama.cpp.git refs/heads/master |
+    awk '{print $1}'
+)"
+
+if [[ ! "$TARGET_SHA" =~ '^[0-9a-f]{40}$' ]]; then
+    echo "ERROR: unable to resolve llama.cpp master SHA"
+    exit 1
+fi
+
+TARGET_SHORT="${TARGET_SHA[1,7]}"
+
+echo
+echo "Target llama.cpp snapshot:"
+echo "  $TARGET_SHA"
+
+# Prepare changes outside the real Homebrew Core.
+STAGE="$(mktemp -d "$STATE_DIR/.stage.XXXXXXXX")"
+
+mkdir -p "$STAGE/original" "$STAGE/patched"
+
+cp -p "$GGML"  "$STAGE/original/ggml.rb"
+cp -p "$LLAMA" "$STAGE/original/llama.cpp.rb"
+
+cp -p "$GGML"  "$STAGE/patched/ggml.rb"
+cp -p "$LLAMA" "$STAGE/patched/llama.cpp.rb"
+
+python3 - "$STAGE/patched/ggml.rb" "$STAGE/patched/llama.cpp.rb" "$TARGET_SHA" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+ggml = Path(sys.argv[1])
+llama = Path(sys.argv[2])
+sha = sys.argv[3]
+
+# ---------- ggml ----------
+s = ggml.read_text()
+
+# Force ggml HEAD to the exact same llama.cpp Git snapshot.
+s, n = re.subn(
+    r'head\s+"https://github\.com/ggml-org/ggml\.git",\s*branch:\s*"master"',
+    f'head "https://github.com/ggml-org/llama.cpp.git", revision: "{sha}"',
+    s,
+    count=1,
+)
+
+if n != 1:
+    raise SystemExit("ERROR: ggml HEAD declaration changed upstream")
+
+needle = '    system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args'
+
+replacement = r'''    source_dir = "."
+
+    if build.head?
+      # llama.cpp vendored ggml intentionally lacks standalone ggml.pc.in.
+      (buildpath/"ggml/ggml.pc.in").write <<~PC
+        prefix=@CMAKE_INSTALL_PREFIX@
+        exec_prefix=${prefix}
+        includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+        libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+
+        Name: ggml
+        Description: The GGML Tensor Library for Machine Learning
+        Version: @GGML_VERSION@
+        Cflags: -I${includedir}
+        Libs: -L${libdir} -lggml
+      PC
+
+      source_dir = "ggml"
+    end
+
+    system "cmake", "-S", source_dir, "-B", "build", *args, *std_cmake_args'''
+
+if needle not in s:
+    raise SystemExit("ERROR: ggml build layout changed upstream")
+
+s = s.replace(needle, replacement, 1)
+ggml.write_text(s)
+
+# ---------- llama.cpp ----------
+s = llama.read_text()
+
+s, n = re.subn(
+    r'head\s+"https://github\.com/ggml-org/llama\.cpp\.git",\s*branch:\s*"master"',
+    f'head "https://github.com/ggml-org/llama.cpp.git", revision: "{sha}"',
+    s,
+    count=1,
+)
+
+if n != 1:
+    raise SystemExit("ERROR: llama.cpp HEAD declaration changed upstream")
+
+llama.write_text(s)
+PY
+
+ruby -c "$STAGE/patched/ggml.rb"  >/dev/null
+ruby -c "$STAGE/patched/llama.cpp.rb" >/dev/null
+
+# Refuse unexpected changes before publishing the transaction.
+for name in ggml.rb llama.cpp.rb; do
+    if [[ "$name" == ggml.rb ]]; then
+        dest="$GGML"
+    else
+        dest="$LLAMA"
+    fi
+
+    cmp -s "$STAGE/original/$name" "$dest" || {
+        echo "ERROR: Formula changed during preparation: $dest" >&2
+        exit 1
+    }
+
+    [[ ! -e "${dest}.headsync-pending" && ! -L "${dest}.headsync-pending" ]] || {
+        echo "ERROR: unexpected pending file beside $dest" >&2
+        exit 1
+    }
+done
+
+[[ ! -e "$TXN_DIR" ]] || {
+    echo "ERROR: transaction already exists" >&2
+    exit 1
+}
+
+# Publish the complete recovery journal before changing live Formulae.
+mv "$STAGE" "$TXN_DIR"
+STAGE=""
+
+# Ensure journal data is flushed before applying changes.
+python3 - "$TXN_DIR" <<'SYNC_JOURNAL'
+import os
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+
+for part in ("original", "patched"):
+    for name in ("ggml.rb", "llama.cpp.rb"):
+        with (root / part / name).open("rb") as f:
+            os.fsync(f.fileno())
+
+# Request filesystem synchronization before modifying live Formulae.
+os.sync()
+SYNC_JOURNAL
+
+for name in ggml.rb llama.cpp.rb; do
+    if [[ "$name" == ggml.rb ]]; then
+        dest="$GGML"
+    else
+        dest="$LLAMA"
+    fi
+
+    cmp -s "$TXN_DIR/original/$name" "$dest" || {
+        echo "ERROR: Formula changed before transaction apply" >&2
+        exit 1
+    }
+
+    pending="${dest}.headsync-pending"
+
+    cp -p "$TXN_DIR/patched/$name" "$pending"
+    mv -f "$pending" "$dest"
+
+    cmp -s "$dest" "$TXN_DIR/patched/$name" || {
+        echo "ERROR: patched Formula verification failed" >&2
+        exit 1
+    }
+done
+
+echo "HEAD-sync transaction prepared and applied"
+
+echo
+echo "== Upgrade matched ggml first =="
+
+HOMEBREW_NO_AUTO_UPDATE=1 \
+brew upgrade --formula --fetch-HEAD ggml
+
+echo
+echo "== Upgrade llama.cpp at identical SHA =="
+
+HOMEBREW_NO_AUTO_UPDATE=1 \
+brew upgrade --formula --fetch-HEAD llama.cpp
+
+echo
+echo "== Upgrade remaining formulae =="
+
+# Both temporary formulae are still fixed to TARGET_SHA here.
+# Exclude managed LLVM and Homebrew Topgrade before outdated's HEAD scan, and all pins.
+typeset -a CANDIDATE_FORMULAE UPGRADE_FORMULAE
+CANDIDATE_FORMULAE=()
+UPGRADE_FORMULAE=()
+for formula in ${(f)INSTALLED_FORMULAE}; do
+    [[ -n "$formula" ]] || continue
+    case "${formula##*/}" in
+        llvm)
+            echo "Skipping pinned Homebrew LLVM; its runtime is intentionally frozen"
+            continue
+            ;;
+        topgrade)
+            echo "Skipping Homebrew topgrade; Rustup Nightly Topgrade is managed separately"
+            continue
+            ;;
+    esac
+    if [[ -n "$PINNED_FORMULAE" ]] &&
+       print -r -- "$PINNED_FORMULAE" | grep -Fxq -- "${formula##*/}"; then
+        echo "Skipping pinned formula: $formula"
+        continue
+    fi
+    CANDIDATE_FORMULAE+=("$formula")
+done
+
+OUTDATED_FORMULAE=""
+RUST_DEPENDENTS=""
+if (( ${#CANDIDATE_FORMULAE[@]} > 0 )); then
+    OUTDATED_FORMULAE="$(
+        python3 - "${CANDIDATE_FORMULAE[@]}" <<'OUTDATED_QUERY'
+import json
+import subprocess
+import sys
+
+candidates = sys.argv[1:]
+result = subprocess.run(
+    ["brew", "outdated", "--formula", "--fetch-HEAD", "--json=v2", *candidates],
+    stdout=subprocess.PIPE, text=True,
+)
+if result.returncode not in (0, 1):
+    if result.stdout:
+        print(result.stdout, file=sys.stderr)
+    raise SystemExit(result.returncode)
+try:
+    data = json.loads(result.stdout)
+    entries = data["formulae"]
+    if not isinstance(entries, list) or data["casks"] != []:
+        raise ValueError("unexpected formula/cask results")
+    # Named queries use status 1 for outdated packages, not an operational failure.
+    if (result.returncode == 1) != bool(entries):
+        raise ValueError("exit status disagrees with outdated results")
+    names = []
+    for entry in entries:
+        name = entry["name"]
+        if name not in candidates or entry["pinned"] is not False or name in names:
+            raise ValueError("unexpected, newly pinned, or duplicate formula")
+        names.append(name)
+except (ValueError, KeyError, TypeError) as error:
+    if result.stdout:
+        print(result.stdout, file=sys.stderr)
+    raise SystemExit(f"ERROR: invalid Homebrew outdated result: {error}")
+print("\n".join(names))
+OUTDATED_QUERY
+    )" || {
+        echo "ERROR: unable to enumerate outdated formulae" >&2
+        exit 1
+    }
+
+    RUST_DEPENDENTS="$(
+        brew uses --installed --include-build --formula rust
+    )" || {
+        echo "ERROR: unable to identify installed Homebrew Rust dependents" >&2
+        exit 1
+    }
+else
+    echo "No eligible installed formulae; skipping outdated scan"
+fi
+
+RUST_VERIFIED=0
+while IFS= read -r formula; do
+    [[ -n "$formula" ]] || continue
+
+    formula_name="${formula##*/}"
+    rust_dependent=0
+    while IFS= read -r dependent; do
+        [[ -n "$dependent" ]] || continue
+        if [[ "${dependent##*/}" == "$formula_name" ]]; then
+            rust_dependent=1
+            break
+        fi
+    done <<< "$RUST_DEPENDENTS"
+
+    if (( rust_dependent && ! RUST_VERIFIED )); then
+        if ! RUST_LINKAGE="$(brew linkage --test rust 2>&1)"; then
+            echo "ERROR: outdated formula directly depends on Homebrew Rust: $formula" >&2
+            print -r -- "$RUST_LINKAGE" >&2
+            echo "Repair Homebrew Rust before upgrading this formula; Rustup PATH does not override Homebrew dependencies." >&2
+            exit 1
+        fi
+        if ! RUST_PREFIX="$(brew --prefix rust)" ||
+           ! "$RUST_PREFIX/bin/rustc" --version >/dev/null; then
+            echo "ERROR: Homebrew Rust cannot run; required by $formula" >&2
+            exit 1
+        fi
+        RUST_VERIFIED=1
+    fi
+
+    UPGRADE_FORMULAE+=("$formula")
+done <<< "$OUTDATED_FORMULAE"
+
+if (( ${#UPGRADE_FORMULAE[@]} > 0 )); then
+    brew upgrade --formula --fetch-HEAD "${UPGRADE_FORMULAE[@]}"
+else
+    echo "No remaining outdated formulae"
+fi
+
+echo
+echo "== Verify matched runtime =="
+
+active_head() {
+    local formula="$1" opt="$2" actual rack
+    if [[ ! -L "$opt" || ! -d "$opt" ]]; then
+        echo "ERROR: active $formula opt link is missing or invalid: $opt" >&2
+        return 1
+    fi
+    actual="$(cd -P "$opt" && pwd -P)" || return 1
+    rack="$(brew --cellar "$formula")" || return 1
+    if [[ "${actual:h}" != "${rack:A}" ]]; then
+        echo "ERROR: active $formula points outside its Homebrew cellar: $actual" >&2
+        return 1
+    fi
+    print -r -- "${actual:t}"
+}
+
+GGML_OPT="$(brew --prefix ggml)" || exit 1
+LLAMA_OPT="$(brew --prefix llama.cpp)" || exit 1
+GGML_HEAD="$(active_head ggml "$GGML_OPT")" || exit 1
+LLAMA_HEAD="$(active_head llama.cpp "$LLAMA_OPT")" || exit 1
+
+echo "ggml      : $GGML_HEAD"
+echo "llama.cpp : $LLAMA_HEAD"
+
+[[ "${GGML_HEAD%%_*}" == "HEAD-$TARGET_SHORT" ]] || {
+    echo "ERROR: ggml did not land on target snapshot"
+    exit 1
+}
+
+[[ "${LLAMA_HEAD%%_*}" == "HEAD-$TARGET_SHORT" ]] || {
+    echo "ERROR: llama.cpp did not land on target snapshot"
+    exit 1
+}
+
+# Keg names use abbreviated hashes; receipts record the complete source revision.
+python3 - "$TARGET_SHA" "$GGML_OPT" "$LLAMA_OPT" <<'VERIFY_RECEIPTS'
+import json
+import sys
+from pathlib import Path
+
+expected = sys.argv[1]
+for name, prefix in zip(("ggml", "llama.cpp"), sys.argv[2:]):
+    try:
+        source = json.loads((Path(prefix) / "INSTALL_RECEIPT.json").read_text())["source"]
+        revision = source["scm_revision"]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise SystemExit(f"ERROR: cannot read {name} full revision from its receipt: {error}")
+    if source.get("spec") != "head" or revision != expected:
+        raise SystemExit(f"ERROR: {name} full revision does not match target: {revision!r}")
+print(f"Both active receipts record full revision {expected}")
+VERIFY_RECEIPTS
+
+grep -q \
+    'ggml_backend_sched_set_copy_callback' \
+    "$GGML_OPT/include/ggml-backend.h"
+
+nm -gU \
+    "$GGML_OPT/lib/libggml-base.dylib" |
+    grep 'ggml_backend_sched_set_copy_callback' >/dev/null
+
+"$LLAMA_OPT/bin/llama-cli" --version
+
+MISSING="$(brew missing)"
+if [[ -n "$MISSING" ]]; then
+    echo "$MISSING"
+    exit 1
+fi
+
+echo
+echo "== Restore official Homebrew formulae =="
+
+recover_txn
+trap - EXIT INT TERM HUP
+
+echo
+echo "== Verify homebrew/core hygiene =="
+
+assert_core_clean "after transaction recovery"
+
+echo "homebrew/core: CLEAN"
+echo "HEAD sync transaction: OK"

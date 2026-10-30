@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+import os
+import re
+import sys
+import plistlib
+import subprocess
+from pathlib import Path
+
+pattern = re.compile(
+    r"^Xcode-(\d+(?:\.\d+)*)-Beta(\d+)-([0-9A-Za-z]+)\.app$",
+    re.IGNORECASE,
+)
+
+env = os.environ.copy()
+env.pop("DEVELOPER_DIR", None)
+
+def active():
+    result = subprocess.run(
+        ["/usr/bin/xcode-select", "-p"],
+        capture_output=True, text=True, env=env
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+def version(developer=None):
+    e = env.copy()
+    if developer:
+        e["DEVELOPER_DIR"] = str(developer)
+    return subprocess.run(
+        ["/usr/bin/xcodebuild", "-version"],
+        capture_output=True, text=True, env=e,
+        timeout=60
+    )
+
+def fail(message):
+    print("Xcode Auto Select: FAILED —", message, file=sys.stderr)
+    sys.exit(1)
+
+candidates = []
+
+for app in Path("/Applications").iterdir():
+    if app.is_symlink() or not app.is_dir():
+        continue
+
+    match = pattern.fullmatch(app.name)
+    if not match:
+        continue
+
+    developer = app / "Contents/Developer"
+    if not developer.is_dir():
+        continue
+
+    key = (
+        tuple(map(int, match.group(1).split("."))),
+        int(match.group(2))
+    )
+    candidates.append((key, app, match.group(3)))
+
+if not candidates:
+    print("Xcode Auto Select: SKIPPED — 未发现已安装的版本化 Beta")
+    sys.exit(0)
+
+_, app, expected_build = max(candidates, key=lambda x: x[0])
+developer = app / "Contents/Developer"
+
+plist = app / "Contents/version.plist"
+if plist.exists():
+    try:
+        with plist.open("rb") as f:
+            metadata = plistlib.load(f)
+        build = metadata.get("ProductBuildVersion")
+        if build and build != expected_build:
+            fail("安装包元数据与目录构建号不一致")
+    except Exception as error:
+        fail(f"无法验证安装包元数据：{error}")
+
+try:
+    result = version(developer)
+except Exception as error:
+    fail(f"目标 Xcode 无法运行：{error}")
+
+if result.returncode != 0:
+    fail(f"目标 Xcode 检查失败：{result.stderr.strip()}")
+
+if f"Build version {expected_build}" not in result.stdout.splitlines():
+    fail("xcodebuild 返回的构建号不匹配")
+
+previous = active()
+
+if previous and os.path.realpath(previous) == os.path.realpath(developer):
+    print(f"Xcode Auto Select: CURRENT — {app.name}")
+    sys.exit(0)
+
+print(f"Xcode Auto Select: SWITCHING → {app.name}", flush=True)
+
+switch = subprocess.run(
+    ["/usr/bin/sudo", "/usr/bin/xcode-select",
+     "--switch", str(developer)],
+    env=env
+)
+
+if switch.returncode != 0:
+    fail("xcode-select 切换失败，原工具链未主动修改")
+
+try:
+    verified = version()
+    correct = (
+        active() is not None
+        and os.path.realpath(active()) == os.path.realpath(developer)
+        and verified.returncode == 0
+        and f"Build version {expected_build}" in verified.stdout.splitlines()
+    )
+except Exception:
+    correct = False
+
+if not correct:
+    if previous:
+        print("验证失败，尝试恢复此前的开发者目录", flush=True)
+        rollback = subprocess.run(
+            ["/usr/bin/sudo", "/usr/bin/xcode-select",
+             "--switch", previous],
+            env=env
+        )
+        if rollback.returncode != 0:
+            print("WARNING: 回退失败，需要人工检查", file=sys.stderr)
+    fail("切换后的版本验证失败")
+
+print(f"Xcode Auto Select: SELECTED — {app.name}")
+print(verified.stdout.strip())

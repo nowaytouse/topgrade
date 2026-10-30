@@ -1,0 +1,75 @@
+#!/bin/bash
+set -u -o pipefail
+umask 077
+
+gcloud_cmd="$(command -v gcloud || true)"
+if [[ -z "$gcloud_cmd" || ! -x "$gcloud_cmd" ]]; then
+    printf 'ERROR: gcloud is unavailable in PATH\n' >&2
+    exit 1
+fi
+
+log_file="$(mktemp "${TMPDIR:-/tmp}/topgrade-gcloud.XXXXXXXX")" || {
+    printf 'ERROR: could not create temporary gcloud output file\n' >&2
+    exit 1
+}
+cleanup() {
+    local rc=$?
+    trap - EXIT
+    if ! rm -f "$log_file"; then
+        printf 'ERROR: could not remove temporary gcloud output file: %s\n' "$log_file" >&2
+        rc=1
+    fi
+    exit "$rc"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+manifest_transport_failure() {
+    # Fail closed on any output beyond the known pre-component crash envelope.
+    LC_ALL=C awk '
+        BEGIN { valid=1; begins=0; errors=0 }
+        /^$/ { next }
+        $0 == "Beginning update. This process may take several minutes." { begins++; next }
+        /^ERROR: gcloud crashed \((SSLError|ConnectionError)\): HTTPSConnectionPool\(host=\047dl[.]google[.]com\047, port=443\): Max retries exceeded with url: \/dl\/cloudsdk\/channels\/rapid\/components-2[.]json / {
+            if (($0 ~ /SSLEOFError/ && $0 ~ /UNEXPECTED_EOF_WHILE_READING/) ||
+                ($0 ~ /ConnectionResetError/ && $0 ~ /Connection reset by peer/)) {
+                errors++; next
+            }
+        }
+        $0 == "If you would like to report this issue, please run the following command:" { next }
+        $0 == "  gcloud feedback" { next }
+        $0 == "To check gcloud for common problems, please run the following command:" { next }
+        $0 == "  gcloud info --run-diagnostics" { next }
+        { valid=0; exit }
+        END { exit !(valid && begins==1 && errors==1) }
+    ' "$log_file"
+}
+
+for attempt in 1 2; do
+    "$gcloud_cmd" components update --quiet >"$log_file" 2>&1
+    update_rc=$?
+    if ! cat "$log_file"; then
+        printf 'ERROR: could not print gcloud update output\n' >&2
+        exit 1
+    fi
+    grep -Fq 'WARNING: Known issue encountered updating Python modules.' "$log_file"
+    grep_rc=$?
+    case "$grep_rc" in
+        0) printf 'ERROR: gcloud reported its update workaround; component update may not have run\n' >&2; exit 1 ;;
+        1) ;;
+        *) printf 'ERROR: could not inspect gcloud update output\n' >&2; exit 1 ;;
+    esac
+    if [[ "$update_rc" -eq 0 || "$attempt" -eq 2 ]]; then
+        exit "$update_rc"
+    fi
+    manifest_transport_failure
+    transport_rc=$?
+    case "$transport_rc" in
+        0) printf 'WARNING: official gcloud manifest transport failed before component operations; retrying once\n' >&2 ;;
+        1) exit "$update_rc" ;;
+        *) printf 'ERROR: could not inspect the gcloud retry boundary\n' >&2; exit 1 ;;
+    esac
+    sleep 2 || exit 1
+done

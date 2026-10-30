@@ -1,0 +1,44 @@
+[misc]
+assume_yes = true
+ask_retry = false
+auto_retry = 1
+pre_sudo = false
+cleanup = false
+display_time = true
+notify_end = "never"
+disable = ["mamba", "conda", "gcloud", "mas"]
+
+[commands]
+"Mac App Store (verified)" = "$HOME/.local/bin/topgrade-mas-verified"
+"gcloud (verified)" = "$HOME/.local/bin/topgrade-gcloud-verified"
+"SQLite Python trunk" = "$HOME/.local/bin/update-python-sqlite-trunk"
+"SQLite trunk" = "$HOME/.local/bin/update-sqlite-trunk"
+"TourBox Beta Update" = "$HOME/.local/bin/update-tourbox-beta --apply"
+"Xcode Beta Update" = "$HOME/.local/bin/update-preview-extras --xcode"
+
+"BetterDisplay Internal Update" = "$HOME/.local/bin/update-preview-extras --betterdisplay"
+
+"Preview macOS Apps" = "$HOME/.local/bin/update-preview-apps --topgrade"
+"Conda frozen base" = "conda self update --yes"
+"Conda default" = "conda update --all -n default --yes"
+
+"Gradle Nightly Toolchain" = "~/.local/bin/proxy-auto-run ~/.local/bin/update-gradle-nightly"
+"Rolling Project Dependencies" = "~/.local/bin/proxy-auto-run ~/.local/bin/update-project-deps --topgrade"
+"Homebrew Linkage Audit" = "out=\"$(brew linkage 2>&1)\"; rc=$?; if [ \"$rc\" -ne 0 ] || printf \"%s\\n\" \"$out\" | grep -Eq \"^[[:space:]]*(Missing libraries|Broken dependencies):\"; then printf \"%s\\n\" \"$out\"; echo \"FAIL: Homebrew linkage\"; exit 1; else echo \"PASS: No missing or broken Homebrew libraries\"; fi"
+"CLI Tool Versions" = "~/.local/bin/cli-versions"
+"npm Bundled Dependency Security" = "$HOME/.local/bin/proxy-auto-run /opt/homebrew/bin/npm update --global npm --ignore-scripts --registry=https://registry.npmjs.org && $HOME/.local/bin/proxy-auto-run /opt/homebrew/opt/python@3.15/bin/python3.15 $HOME/.local/bin/npm-bundled-security-guard.py"
+[helm]
+repository_updater = "~/.local/bin/topgrade-helm-verified"
+
+[rustup]
+channels = ["nightly"]
+
+[brew]
+fetch_head = true
+autoremove = false
+greedy_latest = true
+
+[git]
+max_concurrency = 4
+
+[post_commands]

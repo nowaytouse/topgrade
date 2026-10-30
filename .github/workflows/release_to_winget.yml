@@ -9,6 +9,7 @@ permissions: {}
 
 jobs:
   publish:
+    if: github.repository == 'topgrade-rs/topgrade'
     permissions:
       contents: read
     runs-on: ubuntu-latest

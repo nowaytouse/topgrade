@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Verify an unchanged public Bitnami index over compressed HTTPS; delegate changes to Helm."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+from urllib.parse import urlsplit
+
+PUBLIC = {"https://charts.bitnami.com/bitnami", "https://repo.broadcom.com/bitnami-files"}
+MAX_INDEX = 64 * 1024 * 1024
+
+
+def invoke(args):
+    return subprocess.run(args, capture_output=True, text=True)
+
+
+def regular_bytes(path):
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), "rb") as source:
+        before = os.fstat(source.fileno())
+        if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_INDEX:
+            raise ValueError("repository file is not regular or is too large")
+        data = source.read(MAX_INDEX + 1)
+        after = os.fstat(source.fileno())
+    if len(data) > MAX_INDEX or (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+        raise ValueError("repository file changed while reading")
+    return data
+
+
+def unchanged_public_index(repo, cache, curl):
+    if repo["url"].rstrip("/") not in PUBLIC:
+        return False
+    index = cache / (repo["name"] + "-index.yaml")
+    before = regular_bytes(index)
+    with tempfile.TemporaryDirectory(prefix="topgrade-helm-") as folder:
+        body = Path(folder) / "index.yaml"
+        result = invoke([curl, "--silent", "--show-error", "--fail", "--location",
+                         "--compressed", "--proto", "=https", "--proto-redir", "=https",
+                         "--max-redirs", "3", "--connect-timeout", "15", "--max-time", "90",
+                         "--max-filesize", str(MAX_INDEX), "--output", str(body),
+                         "--write-out", "%{http_code}\n%{url_effective}",
+                         repo["url"].rstrip("/") + "/index.yaml"])
+        if result.returncode:
+            print("Helm: compressed freshness check unavailable; delegating to native Helm", flush=True)
+            return False
+        metadata = result.stdout.splitlines()
+        if len(metadata) != 2 or metadata[0] != "200":
+            raise ValueError("unexpected index HTTP response")
+        target = urlsplit(metadata[1])
+        if target.scheme != "https" or target.hostname not in {"charts.bitnami.com", "repo.broadcom.com"}:
+            raise ValueError("index redirect left the official HTTPS hosts")
+        downloaded = regular_bytes(body)
+        # This shortcut verifies freshness only; a changed index is always installed by native Helm.
+        if downloaded != before:
+            return False
+        if regular_bytes(index) != before:
+            raise ValueError("repository cache changed during verification")
+        print(f"Helm {repo['name']}: CURRENT — official compressed index matches cache "
+              f"(SHA256 {hashlib.sha256(before).hexdigest()})", flush=True)
+        return True
+
+
+def main():
+    if len(sys.argv) != 1:
+        raise ValueError("this updater takes no arguments")
+    helm = shutil.which("helm")
+    curl = shutil.which("curl")
+    if not helm:
+        raise ValueError("helm is unavailable")
+    listing = invoke([helm, "repo", "list", "--output", "json"])
+    if listing.returncode:
+        # Native Helm retains its own error/empty-repository diagnostics.
+        return native(helm, [])
+    repos = json.loads(listing.stdout)
+    if not isinstance(repos, list):
+        raise ValueError("invalid Helm repository listing")
+    if not repos:
+        print("Helm: no configured repositories")
+        return 0
+    names = []
+    for repo in repos:
+        if not isinstance(repo, dict) or not isinstance(repo.get("name"), str) or not isinstance(repo.get("url"), str):
+            raise ValueError("invalid repository record")
+        name = repo["name"]
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or ".." in name or name in names:
+            raise ValueError("unsafe or duplicate repository name")
+        names.append(name)
+    cache_info = invoke([helm, "env", "HELM_REPOSITORY_CACHE"])
+    config_info = invoke([helm, "env", "HELM_REPOSITORY_CONFIG"])
+    if cache_info.returncode or config_info.returncode:
+        return native(helm, names)
+    cache = Path(cache_info.stdout.strip())
+    config = Path(config_info.stdout.strip())
+    if not cache.is_absolute() or not config.is_absolute() or cache.is_symlink():
+        raise ValueError("unexpected Helm repository paths")
+    config_before = regular_bytes(config)
+    pending = []
+    for repo in repos:
+        verified = False
+        if curl and repo["url"].rstrip("/") in PUBLIC:
+            try:
+                verified = unchanged_public_index(repo, cache, curl)
+            except FileNotFoundError:
+                print("Helm: cache is absent; using native updater", flush=True)
+        if regular_bytes(config) != config_before:
+            raise ValueError("repository configuration changed during verification")
+        if not verified:
+            pending.append(repo["name"])
+    return native(helm, pending) if pending else 0
+
+
+def native(helm, names):
+    result = invoke([helm, "repo", "update", *names])
+    print(result.stdout, end="", flush=True)
+    print(result.stderr, end="", file=sys.stderr, flush=True)
+    if result.returncode:
+        return result.returncode
+    if re.search(r"(?im)^.*(?:Unable to get an update|failed to fetch|^Error:)", result.stdout + result.stderr):
+        print("ERROR: Helm reported a repository failure despite exit 0", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"ERROR: Helm verification: {error}", file=sys.stderr)
+        raise SystemExit(1)

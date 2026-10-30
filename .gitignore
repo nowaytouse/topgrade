@@ -18,3 +18,9 @@
 
 # Backup files for any .rs files in the project
 **/*.rs.bk
+
+# Machine-local profile state and Python bytecode
+/profiles/macos/local/
+/profiles/macos/.state/
+**/__pycache__/
+*.pyc

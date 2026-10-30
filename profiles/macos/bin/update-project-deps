@@ -1,0 +1,1880 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+from contextlib import nullcontext
+import datetime as dt
+import hashlib
+import json
+import os
+import re
+import shlex
+import shutil
+import stat
+import subprocess
+import time
+import threading
+
+from dataclasses import dataclass
+from pathlib import Path
+
+
+HOME = Path.home()
+CONFIG = HOME / ".config/project-deps.json"
+CACHE = HOME / ".cache/rolling-deps"
+PRINT_LOCK = threading.Lock()
+CARGO_LOCK = threading.Lock()
+EDGE_EXTRAS = str(
+    HOME / ".local/libexec/rolling-deps/edge-extras.py"
+)
+
+SKIP_DIRS = {
+    ".git", ".hg", ".svn",
+    "node_modules",
+    "target",
+    ".venv", "venv",
+    "__pycache__",
+    ".tox", ".nox",
+    ".pytest_cache", ".mypy_cache",
+    "dist", "build",
+    ".gradle",
+    ".idea", ".vscode",
+    "DerivedData",
+    ".next", ".turbo",
+    ".cache",
+    ".dart_tool",
+    "Pods",
+}
+
+WATCH_NAMES = {
+    "Cargo.toml", "Cargo.lock",
+    "rust-toolchain", "rust-toolchain.toml",
+
+    "pyproject.toml",
+    "uv.lock",
+    "poetry.lock",
+    "pdm.lock",
+    "Pipfile", "Pipfile.lock",
+    "pixi.toml", "pixi.lock",
+    "environment.yml", "environment.yaml",
+
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "yarn.lock",
+    "bun.lock", "bun.lockb",
+    "deno.json", "deno.jsonc", "deno.lock",
+
+    "go.mod", "go.sum",
+
+    "build.zig", "build.zig.zon",
+
+    "Package.swift", "Package.resolved",
+    "Podfile", "Podfile.lock",
+
+    "pom.xml",
+    "settings.gradle", "settings.gradle.kts",
+    "build.gradle", "build.gradle.kts",
+    "gradle/libs.versions.toml",
+
+    "Directory.Packages.props",
+    "packages.lock.json",
+
+    "composer.json", "composer.lock",
+    "Gemfile", "Gemfile.lock",
+
+    "conanfile.py", "conanfile.txt", "conan.lock",
+    "vcpkg.json", "vcpkg-configuration.json",
+
+    "mix.exs", "mix.lock",
+    "rebar.config", "rebar.lock",
+
+    "stack.yaml",
+    "cabal.project", "cabal.project.freeze",
+
+    "Project.toml", "Manifest.toml",
+    "renv.lock",
+
+    "deps.edn",
+    "project.clj",
+    "build.sbt",
+
+    "flake.nix", "flake.lock",
+
+    "gradle-wrapper.properties",
+    "action.yml",
+    "action.yaml",
+    ".pre-commit-config.yaml",
+    ".pre-commit-config.yml",
+
+    ".gitmodules",
+    ".terraform.lock.hcl",
+
+    "mise.toml",
+    ".tool-versions",
+}
+
+WATCH_SUFFIXES = (
+    ".csproj", ".fsproj", ".vbproj", ".sln",
+    ".cabal", ".opam", ".rockspec",
+    ".tf",
+)
+
+
+@dataclass(frozen=True)
+class Surface:
+    name: str
+    root: Path
+    commands: tuple[tuple[str, ...], ...]
+    level: str
+
+
+@dataclass
+class Result:
+    surface: str
+    level: str
+    status: str
+    changed: list[str]
+    failures: list[str]
+    duration: float
+
+
+def load_config():
+    if not CONFIG.exists():
+        return {
+            "roots": ["~/Downloads/GitHub"],
+            "max_depth": 4,
+            "execution": {"jobs": 3},
+        }
+    return json.loads(CONFIG.read_text())
+
+
+def command_exists(exe: str, cwd: Path):
+    if "/" in exe:
+        p = cwd / exe
+        return p.exists() and os.access(p, os.X_OK)
+    return shutil.which(exe) is not None
+
+
+def run_capture(cmd, cwd, timeout=20):
+    try:
+        p = subprocess.run(
+            cmd,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=timeout,
+        )
+        return p.returncode, p.stdout
+    except Exception as e:
+        return 127, str(e)
+
+
+def discover_repos(roots, max_depth):
+    repos = set()
+
+    for raw in roots:
+        root = Path(os.path.expanduser(raw)).resolve()
+
+        if not root.exists():
+            continue
+
+        if (root / ".git").exists():
+            repos.add(root)
+            continue
+
+        for cur, dirs, _ in os.walk(root):
+            p = Path(cur)
+            depth = len(p.relative_to(root).parts)
+
+            dirs[:] = [
+                d for d in dirs
+                if d not in SKIP_DIRS
+            ]
+
+            if depth > max_depth:
+                dirs[:] = []
+                continue
+
+            if (p / ".git").exists():
+                repos.add(p)
+                dirs[:] = []
+
+    return sorted(repos)
+
+
+def walk_files(repo):
+    for cur, dirs, files in os.walk(repo):
+        dirs[:] = [
+            d for d in dirs
+            if d not in SKIP_DIRS
+        ]
+
+        for name in files:
+            yield Path(cur) / name
+
+
+def topmost_dirs(paths):
+    paths = sorted(
+        {p.resolve() for p in paths},
+        key=lambda p: (len(p.parts), str(p)),
+    )
+
+    result = []
+
+    for p in paths:
+        if any(parent == p or parent in p.parents for parent in result):
+            continue
+        result.append(p)
+
+    return result
+
+
+def dirs_with(repo, names):
+    return topmost_dirs([
+        p.parent
+        for p in walk_files(repo)
+        if p.name in names
+    ])
+
+
+def dirs_with_suffix(repo, suffixes):
+    return topmost_dirs([
+        p.parent
+        for p in walk_files(repo)
+        if p.name.endswith(suffixes)
+    ])
+
+
+def relevant_files(repo):
+    result = []
+
+    for p in walk_files(repo):
+        rel = p.relative_to(repo)
+
+        if (
+            p.name in WATCH_NAMES
+            or p.name.endswith(WATCH_SUFFIXES)
+        ):
+            result.append(p)
+            continue
+
+        if (
+            len(rel.parts) >= 3
+            and rel.parts[:2] == (".github", "workflows")
+            and p.suffix in {".yml", ".yaml"}
+        ):
+            result.append(p)
+            continue
+
+        if p.name == "Dockerfile" or p.name.startswith("Dockerfile."):
+            result.append(p)
+
+    return result
+
+
+def digest(path):
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except Exception:
+        return "<unreadable>"
+
+
+def snapshot(repo):
+    return {
+        str(p.relative_to(repo)): digest(p)
+        for p in relevant_files(repo)
+    }
+
+
+def save_backup_file(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def backup_dependencies(repo, run_dir):
+    if run_dir.resolve().is_relative_to(repo.resolve()):
+        raise RuntimeError("Dependency backup must be outside the repository")
+    root = run_dir / "before"
+    root.mkdir(mode=0o700, exist_ok=True)
+    if root.is_symlink():
+        raise RuntimeError("Dependency backup root is a symlink")
+    folder = root / (repo.name + "-" + hashlib.sha1(str(repo).encode()).hexdigest()[:8])
+    folder.mkdir(mode=0o700)
+    entries = {}
+    for path in sorted(relevant_files(repo)):
+        if path.is_symlink() or not path.resolve().is_relative_to(repo.resolve()):
+            raise RuntimeError(f"Refusing dependency backup through a symlink: {path}")
+        with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as source:
+            info = os.fstat(source.fileno())
+            if not stat.S_ISREG(info.st_mode):
+                raise RuntimeError(f"Dependency is not a regular file: {path}")
+            payload = source.read()
+        relative = str(path.relative_to(repo))
+        save_backup_file(folder / "files" / relative, payload)
+        entries[relative] = {
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "size": len(payload),
+            "mode": stat.S_IMODE(info.st_mode),
+            "mtime_ns": info.st_mtime_ns,
+        }
+    if snapshot(repo) != {name: entry["sha256"] for name, entry in entries.items()}:
+        raise RuntimeError("Dependency files changed while backing up; no updates started")
+    save_backup_file(folder / "manifest.json", (
+        json.dumps({"repo": str(repo), "files": entries}, indent=2) + "\n"
+    ).encode())
+    directories = {path.parent for path in folder.rglob("*")} | {folder, root, run_dir}
+    for directory in sorted(directories, key=lambda path: len(path.parts), reverse=True):
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    return folder
+
+
+def changed_files(before, after):
+    return sorted(
+        p
+        for p in set(before) | set(after)
+        if before.get(p) != after.get(p)
+    )
+
+
+def yarn_command(root, edge):
+    rc, output = run_capture(("yarn", "--version"), root)
+
+    major = 1
+
+    if rc == 0:
+        m = re.match(r"(\d+)", output.strip())
+        if m:
+            major = int(m.group(1))
+
+    if not edge:
+        return ("yarn", "upgrade")
+
+    if major <= 1:
+        return ("yarn", "upgrade", "--latest")
+
+    return ("yarn", "up", "*")
+
+
+def detect_surfaces(repo, edge=True):
+    s = []
+
+    # Rust -------------------------------------------------
+
+    for root in dirs_with(repo, {"Cargo.toml"}):
+        commands = []
+
+        if edge and shutil.which("cargo-upgrade"):
+            commands.append((
+                "cargo",
+                "upgrade",
+                "--incompatible", "allow",
+                "--pinned", "allow",
+                "--recursive", "true",
+            ))
+
+        commands.append(("cargo", "update"))
+
+        s.append(Surface(
+            "Cargo",
+            root,
+            tuple(commands),
+            "major+git" if edge else "compatible",
+        ))
+
+    # Python -----------------------------------------------
+
+    for root in dirs_with(repo, {"uv.lock"}):
+        s.append(Surface(
+            "uv",
+            root,
+            (("uv", "lock", "--upgrade"),),
+            "constraints+git",
+        ))
+
+    for root in dirs_with(repo, {"poetry.lock"}):
+        s.append(Surface(
+            "Poetry",
+            root,
+            (("poetry", "update", "--lock"),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"pdm.lock"}):
+        command = (
+            "pdm",
+            "update",
+            "--unconstrained",
+            "--prerelease",
+            "--no-sync",
+        ) if edge else (
+            "pdm",
+            "update",
+            "--no-sync",
+        )
+
+        s.append(Surface(
+            "PDM",
+            root,
+            (command,),
+            "major+prerelease" if edge else "compatible",
+        ))
+
+    for root in dirs_with(repo, {"Pipfile", "Pipfile.lock"}):
+        s.append(Surface(
+            "Pipenv",
+            root,
+            (("pipenv", "update"),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"pixi.toml", "pixi.lock"}):
+        command = (
+            "pixi", "upgrade", "--no-install"
+        ) if edge else (
+            "pixi", "update", "--no-install"
+        )
+
+        s.append(Surface(
+            "Pixi",
+            root,
+            (command,),
+            "manifest+lock" if edge else "compatible",
+        ))
+
+
+    # Conda ------------------------------------------------
+
+    for root in dirs_with(
+        repo,
+        {"environment.yml", "environment.yaml"},
+    ):
+        env_file = (
+            "environment.yml"
+            if (root / "environment.yml").exists()
+            else "environment.yaml"
+        )
+
+        s.append(Surface(
+            "Conda environment",
+            root,
+            ((
+                "conda",
+                "env",
+                "update",
+                "--file",
+                env_file,
+                "--prune",
+            ),),
+            "manifest-constraints",
+        ))
+
+    # JavaScript / TypeScript ------------------------------
+
+    for root in dirs_with(repo, {"package.json"}):
+        if (
+            (root / "pnpm-lock.yaml").exists()
+            or (root / "pnpm-workspace.yaml").exists()
+        ):
+            cmd = ["pnpm", "up"]
+
+            if edge:
+                cmd.append("--latest")
+
+            if (root / "pnpm-workspace.yaml").exists():
+                cmd.append("--recursive")
+
+            cmd.append("--include-github-actions")
+
+            s.append(Surface(
+                "pnpm",
+                root,
+                (tuple(cmd),),
+                "major+actions" if edge else "compatible+actions",
+            ))
+
+        elif (
+            (root / "bun.lock").exists()
+            or (root / "bun.lockb").exists()
+        ):
+            cmd = ["bun", "update"]
+
+            if edge:
+                cmd.append("--latest")
+
+            try:
+                pkg = json.loads((root / "package.json").read_text())
+            except Exception:
+                pkg = {}
+
+            if pkg.get("workspaces"):
+                cmd.append("--recursive")
+
+            s.append(Surface(
+                "Bun",
+                root,
+                (tuple(cmd),),
+                "major" if edge else "compatible",
+            ))
+
+        elif (root / "yarn.lock").exists():
+            s.append(Surface(
+                "Yarn",
+                root,
+                (yarn_command(root, edge),),
+                "major" if edge else "compatible",
+            ))
+
+        elif (
+            (root / "package-lock.json").exists()
+            or (root / "npm-shrinkwrap.json").exists()
+        ):
+            commands = []
+
+            if edge and shutil.which("npx"):
+                commands.append((
+                    "npx",
+                    "--yes",
+                    "npm-check-updates@latest",
+                    "-u",
+                ))
+
+            commands.append((
+                "npm",
+                "install" if edge else "update",
+            ))
+
+            s.append(Surface(
+                "npm",
+                root,
+                tuple(commands),
+                "major" if edge and shutil.which("npx") else "compatible",
+            ))
+
+
+    # GitHub Actions ---------------------------------------
+
+    has_actions = any(
+        (
+            len(p.relative_to(repo).parts) >= 3
+            and p.relative_to(repo).parts[:2]
+                == (".github", "workflows")
+            and p.suffix in {".yml", ".yaml"}
+        )
+        or p.name in {"action.yml", "action.yaml"}
+        for p in walk_files(repo)
+    )
+
+    if has_actions:
+        s.append(Surface(
+            "GitHub Actions",
+            repo,
+            ((
+                "pinact",
+                "run",
+                "--update",
+                "--branch-to-tag", "^main$",
+                "--branch-to-tag", "^master$",
+                "--branch-to-tag", "^stable$",
+            ),),
+            "latest+sha-pin",
+        ))
+
+    # Deno -------------------------------------------------
+
+    for root in dirs_with(repo, {"deno.json", "deno.jsonc"}):
+        command = (
+            "deno", "update", "--latest", "--recursive"
+        ) if edge else (
+            "deno", "update", "--recursive"
+        )
+
+        s.append(Surface(
+            "Deno",
+            root,
+            (command,),
+            "major" if edge else "compatible",
+        ))
+
+    # Go ---------------------------------------------------
+
+    for root in dirs_with(repo, {"go.mod"}):
+        s.append(Surface(
+            "Go Modules",
+            root,
+            (
+                ("go", "get", "-u", "./..."),
+                ("go", "mod", "tidy"),
+            ),
+            "module-path edge",
+        ))
+
+
+    # Zig --------------------------------------------------
+
+    for root in dirs_with(repo, {"build.zig.zon"}):
+        s.append(Surface(
+            "Zig packages",
+            root,
+            ((
+                "python3",
+                EDGE_EXTRAS,
+                "zig",
+                str(root),
+            ),),
+            "github-head",
+        ))
+
+    # Apple ------------------------------------------------
+
+    for root in dirs_with(repo, {"Package.swift"}):
+        s.append(Surface(
+            "SwiftPM",
+            root,
+            (("swift", "package", "update"),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"Podfile"}):
+        s.append(Surface(
+            "CocoaPods",
+            root,
+            (("pod", "update"),),
+            "constraints",
+        ))
+
+    # JVM --------------------------------------------------
+
+    for root in dirs_with(repo, {"pom.xml"}):
+        if edge:
+            commands = ((
+                "mvn",
+                "-q",
+                "versions:use-latest-versions",
+                "versions:update-properties",
+                "-DgenerateBackupPoms=false",
+            ),)
+        else:
+            commands = ((
+                "mvn",
+                "-q",
+                "versions:use-latest-releases",
+                "-DgenerateBackupPoms=false",
+            ),)
+
+        s.append(Surface(
+            "Maven",
+            root,
+            commands,
+            "major" if edge else "releases",
+        ))
+
+
+    # Gradle -----------------------------------------------
+
+    for root in dirs_with(
+        repo,
+        {
+            "settings.gradle",
+            "settings.gradle.kts",
+            "build.gradle",
+            "build.gradle.kts",
+        },
+    ):
+        s.append(Surface(
+            "Gradle",
+            root,
+            ((
+                "python3",
+                EDGE_EXTRAS,
+                "gradle",
+                str(root),
+            ),),
+            "integration+prerelease+nightly",
+        ))
+
+    # .NET -------------------------------------------------
+
+    for root in dirs_with_suffix(
+        repo,
+        (
+            ".csproj",
+            ".fsproj",
+            ".vbproj",
+            ".sln",
+        ),
+    ):
+        s.append(Surface(
+            ".NET / NuGet",
+            root,
+            ((
+                "dotnet",
+                "package",
+                "update",
+                "--project",
+                ".",
+            ),),
+            "highest-available",
+        ))
+
+    # PHP / Ruby -------------------------------------------
+
+    for root in dirs_with(repo, {"composer.json"}):
+        s.append(Surface(
+            "Composer",
+            root,
+            ((
+                "composer",
+                "update",
+                "--with-all-dependencies",
+                "--no-interaction",
+            ),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"Gemfile"}):
+        s.append(Surface(
+            "Bundler",
+            root,
+            (("bundle", "update"),),
+            "constraints",
+        ))
+
+    # C / C++ ---------------------------------------------
+
+    for root in dirs_with(repo, {"conanfile.py", "conanfile.txt"}):
+        s.append(Surface(
+            "Conan",
+            root,
+            ((
+                "conan",
+                "install",
+                ".",
+                "--update",
+                "--build=missing",
+            ),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"vcpkg.json"}):
+        s.append(Surface(
+            "vcpkg",
+            root,
+            ((
+                "vcpkg",
+                "x-update-baseline",
+                "--add-initial-baseline",
+            ),),
+            "baseline",
+        ))
+
+    # Elixir / Erlang --------------------------------------
+
+    for root in dirs_with(repo, {"mix.exs"}):
+        s.append(Surface(
+            "Mix/Hex",
+            root,
+            (("mix", "deps.update", "--all"),),
+            "constraints",
+        ))
+
+    for root in dirs_with(repo, {"rebar.config"}):
+        s.append(Surface(
+            "rebar3",
+            root,
+            (("rebar3", "upgrade"),),
+            "constraints",
+        ))
+
+    # Julia / R --------------------------------------------
+
+    for root in dirs_with(repo, {"Project.toml"}):
+        if (root / "Manifest.toml").exists():
+            s.append(Surface(
+                "Julia",
+                root,
+                ((
+                    "julia",
+                    "--project=.",
+                    "-e",
+                    "using Pkg; Pkg.update()",
+                ),),
+                "constraints",
+            ))
+
+    for root in dirs_with(repo, {"renv.lock"}):
+        s.append(Surface(
+            "R/renv",
+            root,
+            ((
+                "Rscript",
+                "-e",
+                "renv::update(prompt = FALSE)",
+            ),),
+            "constraints",
+        ))
+
+
+    # Docker / OCI -----------------------------------------
+
+    docker_roots = topmost_dirs([
+        p.parent
+        for p in walk_files(repo)
+        if (
+            p.name == "Dockerfile"
+            or p.name.startswith("Dockerfile.")
+        )
+    ])
+
+    for root in docker_roots:
+        s.append(Surface(
+            "Docker images",
+            root,
+            ((
+                "python3",
+                EDGE_EXTRAS,
+                "docker",
+                str(root),
+            ),),
+            "tag+digest-edge",
+        ))
+
+    # Repository / infra -----------------------------------
+
+    from shutil import which as _rolling_nix_which
+    for root in dirs_with(repo, {"flake.lock"}):
+        if _rolling_nix_which("nix") is None:
+            continue
+        s.append(Surface(
+            "Nix Flake",
+            root,
+            (("nix", "flake", "update"),),
+            "edge",
+        ))
+
+    for root in dirs_with(repo, {
+        ".pre-commit-config.yaml",
+        ".pre-commit-config.yml",
+    }):
+        s.append(Surface(
+            "pre-commit",
+            root,
+            (("pre-commit", "autoupdate"),),
+            "edge",
+        ))
+
+    if (repo / ".gitmodules").exists():
+        s.append(Surface(
+            "Git submodules",
+            repo,
+            ((
+                "git",
+                "submodule",
+                "update",
+                "--init",
+                "--remote",
+                "--recursive",
+            ),),
+            "remote-head",
+        ))
+
+    for root in dirs_with_suffix(repo, (".tf",)):
+        s.append(Surface(
+            "Terraform",
+            root,
+            ((
+                "terraform",
+                "init",
+                "-upgrade",
+                "-backend=false",
+            ),),
+            "provider/module constraints",
+        ))
+
+    # mise / asdf style project toolchains ----------------
+
+    for root in dirs_with(repo, {"mise.toml", ".tool-versions"}):
+        if shutil.which("mise"):
+            s.append(Surface(
+                "mise toolchains",
+                root,
+                (("mise", "upgrade"),),
+                "edge",
+            ))
+
+    # Exact dedupe
+    dedup = {}
+
+    for surface in s:
+        key = (surface.name, str(surface.root.resolve()))
+        dedup[key] = surface
+
+    return list(dedup.values())
+
+
+def unsupported(repo, surfaces):
+    result = set()
+
+    has_actions = any(
+        s.name == "GitHub Actions"
+        for s in surfaces
+    )
+
+    docker_from = re.compile(
+        r"^\s*FROM\s+"
+        r"(?:--platform=\S+\s+)?"
+        r"(\S+)",
+        re.I,
+    )
+
+    for p in walk_files(repo):
+        rel = p.relative_to(repo)
+
+        # Zig URL forms that cannot safely be converted
+        # into remote GitHub HEAD tracking.
+        if p.name == "build.zig.zon":
+            try:
+                text = p.read_text(
+                    errors="ignore"
+                )
+
+                urls = re.findall(
+                    r'\.url\s*=\s*"([^"]+)"',
+                    text,
+                )
+
+                unsupported_urls = [
+                    url
+                    for url in urls
+                    if not (
+                        re.match(
+                            r"git\+https://github\.com/",
+                            url,
+                        )
+                        or re.match(
+                            r"https://github\.com/"
+                            r"[^/]+/[^/]+/archive/",
+                            url,
+                        )
+                    )
+                ]
+
+                if unsupported_urls:
+                    result.add(
+                        f"{rel} "
+                        f"[Zig unsupported URL forms: "
+                        f"{len(unsupported_urls)}]"
+                    )
+
+            except Exception:
+                result.add(
+                    f"{rel} "
+                    "[Zig dependency scan failed]"
+                )
+
+        # Static FROM refs are handled by crane.
+        # Dynamic ARG/environment driven refs cannot be
+        # resolved reliably without executing the Docker build.
+        if (
+            p.name == "Dockerfile"
+            or p.name.startswith(
+                "Dockerfile."
+            )
+        ):
+            try:
+                for line in p.read_text(
+                    errors="ignore"
+                ).splitlines():
+
+                    match = docker_from.match(
+                        line
+                    )
+
+                    if (
+                        match
+                        and "$" in match.group(1)
+                    ):
+                        result.add(
+                            f"{rel} "
+                            "[dynamic Docker FROM]"
+                        )
+
+            except Exception:
+                result.add(
+                    f"{rel} "
+                    "[Dockerfile scan failed]"
+                )
+
+        if (
+            len(rel.parts) >= 3
+            and rel.parts[:2]
+                == (".github", "workflows")
+            and p.suffix
+                in {".yml", ".yaml"}
+            and not has_actions
+        ):
+            result.add(
+                ".github/workflows/* "
+                "[GitHub Actions]"
+            )
+
+    return sorted(result)
+
+def live_print(message=""):
+    with PRINT_LOCK:
+        print(
+            message,
+            flush=True,
+        )
+
+
+
+# proxy-auto: per-command fallback
+def _sanitize_dead_local_proxy(env):
+    import socket
+    from urllib.parse import urlparse
+
+    keys = (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    )
+
+    dead = False
+
+    for key in keys:
+        raw = env.get(key)
+
+        if not raw:
+            continue
+
+        try:
+            parsed = urlparse(
+                raw
+                if "://" in raw
+                else "http://" + raw
+            )
+            host = parsed.hostname
+            port = parsed.port
+        except (ValueError, TypeError):
+            continue
+
+        if (
+            host not in {
+                "127.0.0.1",
+                "localhost",
+                "::1",
+            }
+            or not port
+        ):
+            continue
+
+        try:
+            sock = socket.create_connection(
+                (host, port),
+                timeout=0.20,
+            )
+            sock.close()
+
+        except OSError:
+            dead = True
+            break
+
+    if dead:
+        for key in keys:
+            env.pop(key, None)
+
+        env["PROXY_AUTO_FALLBACK"] = "direct"
+
+    return env
+
+
+def execute(repo, surface, run_dir, dry_run):
+    started = time.monotonic()
+
+    before = snapshot(repo)
+
+    failures = []
+    missing_tool = None
+    resolver_breaking = False
+    discovered_updates = False
+    upstream_missing = False
+    transient_network = False
+
+    log_name = (
+        repo.name
+        + "-"
+        + hashlib.sha1(
+            str(repo).encode()
+        ).hexdigest()[:8]
+        + ".log"
+    )
+
+    log_path = run_dir / log_name
+
+    with log_path.open(
+        "a",
+        buffering=1,
+    ) as log:
+
+        log.write(
+            f"\n## {surface.name} "
+            f"@ {surface.root}\n"
+            f"level={surface.level}\n"
+        )
+
+        for cmd in surface.commands:
+            # rolling-exclude:bincode
+            if (
+                surface.name == "Cargo"
+                and len(cmd) >= 2
+                and cmd[0] == "cargo"
+                and cmd[1] == "upgrade"
+                and "--exclude" not in cmd
+            ):
+                cmd = [
+                    *cmd,
+                    "--exclude",
+                    "bincode",
+                ]
+
+            pretty = shlex.join(cmd)
+
+            log.write(
+                f"$ {pretty}\n"
+            )
+
+            log.flush()
+
+            live_print(
+                f"\n▶ {repo.name} / "
+                f"{surface.name}"
+            )
+
+            live_print(
+                f"  $ {pretty}"
+            )
+
+            if dry_run:
+                continue
+
+            if not command_exists(
+                cmd[0],
+                surface.root,
+            ):
+                failure = (
+                    f"missing command: "
+                    f"{cmd[0]}"
+                )
+
+                missing_tool = cmd[0]
+
+                log.write(
+                    f"[missing] "
+                    f"{cmd[0]}\n"
+                )
+
+                log.flush()
+
+                live_print(
+                    f"  ↷ {failure} — skipped"
+                )
+
+                break
+
+            try:
+                child_env = _sanitize_dead_local_proxy(os.environ.copy())
+                if (
+                    cmd[0] == "pinact"
+                    and not child_env.get("PINACT_GITHUB_TOKEN")
+                    and not child_env.get("GITHUB_TOKEN")
+                    and shutil.which("gh")
+                ):
+                    token_proc = subprocess.run(
+                        ["gh", "auth", "token"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        text=True,
+                    )
+
+                    token = token_proc.stdout.strip()
+
+                    if token_proc.returncode == 0 and token:
+                        child_env["PINACT_GITHUB_TOKEN"] = token
+
+                        live_print(
+                            "  ✓ pinact: authenticated GitHub API"
+                        )
+                    else:
+                        live_print(
+                            "  ! pinact: no GitHub token; "
+                            "anonymous rate limits apply"
+                        )
+
+                with CARGO_LOCK if cmd[0] == "cargo" else nullcontext():
+                    process = subprocess.Popen(
+                        cmd,
+                        cwd=surface.root,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                        errors="replace",
+                        env=child_env,
+                    )
+
+                    assert process.stdout is not None
+
+                    prefix = (
+                        f"  [{repo.name} / "
+                        f"{surface.name}] "
+                    )
+
+                    for line in process.stdout:
+                        log.write(line)
+                        log.flush()
+
+                        # Preserve useful blank lines without
+                        # producing meaningless prefixes.
+                        clean = line.rstrip(
+                            "\r\n"
+                        )
+
+                        if (
+                            surface.name == "Docker images"
+                            and any(
+                                token in clean.lower()
+                                for token in (
+                                    "retrying eof",
+                                    "unexpected eof",
+                                    ": eof",
+                                    "connection reset by peer",
+                                    "tls handshake timeout",
+                                    "i/o timeout",
+                                    "context deadline exceeded",
+                                    "temporary failure",
+                                    "too many requests",
+                                    "429 too many requests",
+                                    "502 bad gateway",
+                                    "503 service unavailable",
+                                    "504 gateway timeout",
+                                )
+                            )
+                        ):
+                            transient_network = True
+
+                        if (
+                            surface.name == "Cargo"
+                            and (
+                                "failed to select a version for"
+                                in clean
+                                or
+                                "could not resolve this conflict"
+                                in clean
+                                or
+                                "failed to select a version"
+                                in clean
+                            )
+                        ):
+                            resolver_breaking = True
+
+                        if clean:
+                            live_print(
+                                prefix + clean
+                            )
+
+                    returncode = (
+                        process.wait()
+                    )
+
+                log.write(
+                    f"\n[exit "
+                    f"{returncode}]\n"
+                )
+
+                log.flush()
+
+                if returncode:
+
+                    if (
+                        surface.name == "Gradle"
+                        and returncode == 5
+                    ):
+                        discovered_updates = True
+
+                        live_print(
+                            "  ◇ Gradle updates discovered "
+                            "but no direct declaration "
+                            "could be rewritten"
+                        )
+
+                        break
+
+                    if (
+                        surface.name == "Docker images"
+                        and returncode == 6
+                    ):
+                        upstream_missing = True
+
+                        live_print(
+                            "  ⚠ Docker upstream manifest "
+                            "is missing"
+                        )
+
+                        break
+
+                    if (
+                        surface.name == "Docker images"
+                        and transient_network
+                    ):
+                        live_print(
+                            "  ↻ Docker registry/network "
+                            "failure remains retryable"
+                        )
+
+                        break
+
+                    failure = (
+                        f"{pretty} -> "
+                        f"exit {returncode}"
+                    )
+
+                    failures.append(
+                        failure
+                    )
+
+                    live_print(
+                        f"  ✗ {failure}"
+                    )
+
+                    break
+
+            except Exception as exc:
+                failure = (
+                    f"{pretty} -> "
+                    f"{exc}"
+                )
+
+                failures.append(
+                    failure
+                )
+
+                log.write(
+                    f"\n[exception] "
+                    f"{exc}\n"
+                )
+
+                log.flush()
+
+                live_print(
+                    f"  ✗ {failure}"
+                )
+
+                break
+
+    after = snapshot(repo)
+
+    changed = changed_files(
+        before,
+        after,
+    )
+
+    if dry_run:
+        status = "DRY-RUN"
+
+    elif resolver_breaking:
+        status = "BREAKING"
+
+    elif upstream_missing and changed:
+        status = "PARTIAL"
+
+    elif upstream_missing:
+        status = "UPSTREAM_MISSING"
+
+    elif transient_network:
+        status = "RETRYABLE"
+
+    elif discovered_updates:
+        status = "DISCOVERED"
+
+    elif missing_tool and changed:
+        status = "PARTIAL"
+
+    elif missing_tool:
+        status = "SKIPPED"
+
+    elif failures and changed:
+        status = "PARTIAL"
+
+    elif failures:
+        status = "FAILED"
+
+    elif changed:
+        status = "ROLLED"
+
+    else:
+        status = "CURRENT"
+
+    duration = (
+        time.monotonic()
+        - started
+    )
+
+    marker = {
+        "ROLLED": "↑",
+        "CURRENT": "✓",
+        "PARTIAL": "!",
+        "FAILED": "✗",
+        "BREAKING": "⚡",
+        "DISCOVERED": "◇",
+        "UPSTREAM_MISSING": "⚠",
+        "RETRYABLE": "↻",
+        "SKIPPED": "↷",
+        "DRY-RUN": "→",
+    }.get(
+        status,
+        "?",
+    )
+
+    live_print(
+        f"{marker} {repo.name} / "
+        f"{surface.name}: "
+        f"{status}"
+        f"  [{duration:.1f}s]"
+        + (
+            f"  {len(changed)} file(s) changed"
+            if changed
+            else ""
+        )
+    )
+
+    return Result(
+        surface=surface.name,
+        level=surface.level,
+        status=status,
+        changed=changed,
+        failures=failures,
+        duration=duration,
+    )
+
+def git_status(repo):
+    rc, out = run_capture(
+        ("git", "status", "--short"),
+        repo,
+    )
+    return out.strip() if rc == 0 else "<unavailable>"
+
+
+def process_repo(repo, edge, run_dir, dry_run):
+    surfaces = detect_surfaces(repo, edge=edge)
+    unknown = unsupported(repo, surfaces)
+
+    log_name = (
+        repo.name
+        + "-"
+        + hashlib.sha1(str(repo).encode()).hexdigest()[:8]
+        + ".log"
+    )
+
+    log_path = run_dir / log_name
+
+    with log_path.open("a") as log:
+        log.write(
+            f"# repo: {repo}\n"
+            f"# initial status:\n{git_status(repo)}\n"
+        )
+
+    if surfaces and not dry_run:
+        backup_dependencies(repo, run_dir)
+
+    results = []
+
+    for surface in surfaces:
+        results.append(
+            execute(
+                repo,
+                surface,
+                run_dir,
+                dry_run,
+            )
+        )
+
+    with log_path.open("a") as log:
+        log.write(
+            f"\n# final status:\n{git_status(repo)}\n"
+        )
+
+    return repo, results, unknown
+
+
+def append_history(run_id, repo, result):
+    CACHE.mkdir(parents=True, exist_ok=True)
+
+    record = {
+        "time": dt.datetime.now().astimezone().isoformat(),
+        "run": run_id,
+        "repo": str(repo),
+        "surface": result.surface,
+        "level": result.level,
+        "status": result.status,
+        "changed": result.changed,
+        "failures": result.failures,
+        "duration_s": round(result.duration, 3),
+    }
+
+    with (CACHE / "history.jsonl").open("a") as f:
+        f.write(
+            json.dumps(
+                record,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+
+
+def show_history(project):
+    path = CACHE / "history.jsonl"
+
+    if not path.exists():
+        print("No history yet.")
+        return 0
+
+    found = 0
+
+    for line in path.read_text().splitlines():
+        try:
+            row = json.loads(line)
+        except Exception:
+            continue
+
+        if project.lower() not in row.get("repo", "").lower():
+            continue
+
+        changed = ", ".join(
+            row.get("changed", [])
+        ) or "no dependency-file changes"
+
+        print(
+            f'{row["time"]}  '
+            f'{row["surface"]:<18} '
+            f'{row["status"]:<8} '
+            f'{changed}'
+        )
+
+        found += 1
+
+    if not found:
+        print(f"No history matching: {project}")
+
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        description=(
+            "Aggressively roll local project dependencies "
+            "toward upstream edge."
+        )
+    )
+
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--topgrade", action="store_true")
+    ap.add_argument("--compatible", action="store_true")
+    ap.add_argument("--project")
+    ap.add_argument("--history", metavar="PROJECT")
+    ap.add_argument("--jobs", type=int)
+
+    args = ap.parse_args()
+
+    if args.history:
+        return show_history(args.history)
+
+    cfg = load_config()
+
+    edge = not args.compatible
+
+    roots = cfg.get(
+        "roots",
+        ["~/Downloads/GitHub"],
+    )
+
+    max_depth = int(
+        cfg.get("max_depth", 4)
+    )
+
+    jobs = (
+        args.jobs
+        or int(
+            cfg.get(
+                "execution",
+                {},
+            ).get("jobs", 3)
+        )
+    )
+
+    repos = discover_repos(
+        roots,
+        max_depth,
+    )
+
+    if args.project:
+        needle = args.project.lower()
+
+        repos = [
+            repo
+            for repo in repos
+            if needle in str(repo).lower()
+        ]
+
+    run_id = (
+        dt.datetime.now()
+        .astimezone()
+        .strftime("%Y%m%d-%H%M%S")
+    )
+
+    run_dir = CACHE / run_id
+    run_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    if not args.topgrade:
+        print(
+            f"Rolling mode : "
+            f"{'EDGE' if edge else 'COMPATIBLE'}"
+        )
+        print(f"Repositories : {len(repos)}")
+        print(f"Logs         : {run_dir}")
+        print()
+
+    rows = []
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=max(1, jobs)
+    ) as pool:
+
+        futures = {
+            pool.submit(
+                process_repo,
+                repo,
+                edge,
+                run_dir,
+                args.dry_run,
+            ): repo
+            for repo in repos
+        }
+
+        for future in concurrent.futures.as_completed(
+            futures
+        ):
+            repo = futures[future]
+
+            try:
+                rows.append(
+                    future.result()
+                )
+
+            except Exception as e:
+                rows.append((
+                    repo,
+                    [
+                        Result(
+                            "orchestrator",
+                            "internal",
+                            "FAILED",
+                            [],
+                            [str(e)],
+                            0,
+                        )
+                    ],
+                    [],
+                ))
+
+    rows.sort(
+        key=lambda row: str(row[0]).lower()
+    )
+
+    counts = {}
+    unsupported_count = 0
+    changed_count = 0
+
+    print(
+        "── Rolling Project Dependencies "
+        + "─" * 22
+    )
+
+    for repo, results, unknown in rows:
+        if not results and not unknown:
+            continue
+
+        print(f"\n{repo.name}")
+
+        for result in results:
+            counts[result.status] = (
+                counts.get(result.status, 0)
+                + 1
+            )
+
+            changed_count += len(
+                result.changed
+            )
+
+            marker = {
+                "ROLLED": "↑",
+                "CURRENT": "✓",
+                "PARTIAL": "!",
+                "FAILED": "✗",
+                "DRY-RUN": "→",
+            
+                "BREAKING": "⚡",
+                "SKIPPED": "↷",
+                "DISCOVERED": "◇",
+                "UPSTREAM_MISSING": "⚠",
+                "RETRYABLE": "↻",
+}.get(
+                result.status,
+                "?",
+            )
+
+            print(
+                f"  {marker} "
+                f"{result.surface:<18} "
+                f"{result.status:<8} "
+                f"[{result.level}]"
+            )
+
+            if (
+                result.changed
+                and not args.topgrade
+            ):
+                for name in result.changed[:12]:
+                    print(
+                        f"      {name}"
+                    )
+
+                if len(result.changed) > 12:
+                    print(
+                        f"      … +"
+                        f"{len(result.changed)-12} files"
+                    )
+
+            for failure in result.failures[:2]:
+                print(
+                    f"      {failure}"
+                )
+
+            if not args.dry_run:
+                append_history(
+                    run_id,
+                    repo,
+                    result,
+                )
+
+        if unknown:
+            unsupported_count += len(
+                unknown
+            )
+
+            print(
+                f"  ? unsupported         "
+                f"{len(unknown)} surface(s)"
+            )
+
+            if not args.topgrade:
+                for item in unknown[:12]:
+                    print(
+                        f"      {item}"
+                    )
+
+    print()
+    print("─" * 58)
+
+    print(
+        f"Repositories       {len(repos)}"
+    )
+
+    print(
+        f"Rolled surfaces    "
+        f"{counts.get('ROLLED', 0)}"
+    )
+
+    print(
+        f"Current surfaces   "
+        f"{counts.get('CURRENT', 0)}"
+    )
+
+    print(
+        f"Partial            "
+        f"{counts.get('PARTIAL', 0)}"
+    )
+
+    print(
+        f"Breaking           "
+        f"{counts.get('BREAKING', 0)}"
+    )
+
+    print(
+        f"Discovered         "
+        f"{counts.get('DISCOVERED', 0)}"
+    )
+
+    print(
+        f"Upstream missing   "
+        f"{counts.get('UPSTREAM_MISSING', 0)}"
+    )
+
+    print(
+        f"Retryable          "
+        f"{counts.get('RETRYABLE', 0)}"
+    )
+
+    print(
+        f"Failed             "
+        f"{counts.get('FAILED', 0)}"
+    )
+
+    print(
+        f"Skipped            "
+        f"{counts.get('SKIPPED', 0)}"
+    )
+
+    if args.dry_run:
+        print(
+            f"Dry-run surfaces   "
+            f"{counts.get('DRY-RUN', 0)}"
+        )
+
+    print(
+        f"Changed dep files  "
+        f"{changed_count}"
+    )
+
+    print(
+        f"Unsupported        "
+        f"{unsupported_count}"
+    )
+
+    print(
+        f"Logs               "
+        f"{run_dir}"
+    )
+
+    return int(any(counts.get(name, 0) for name in ("PARTIAL", "BREAKING", "FAILED", "RETRYABLE")))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   main:
+    if: github.repository == 'topgrade-rs/topgrade'
     name: Validate PR title # zizmor: ignore[concurrency-limits] see above
     runs-on: ubuntu-latest
     permissions:

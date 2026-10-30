@@ -19,6 +19,7 @@ permissions: read-all
 
 jobs:
   analysis:
+    if: github.repository == 'topgrade-rs/topgrade'
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:

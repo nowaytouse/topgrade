@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+import plistlib
+import io
+import os
+import re
+from datetime import datetime
+import subprocess
+import sys
+from pathlib import Path
+
+def betterdisplay():
+    cli = (
+        Path.home()
+        / ".local/opt/sparkle-cli/sparkle.app/Contents/MacOS/sparkle"
+    )
+    app = Path("/Applications/BetterDisplay.app")
+
+    if not cli.is_file() or not app.is_dir():
+        print("ERROR: BetterDisplay 或 Sparkle CLI 不存在")
+        return 1
+
+    # Never point a privileged updater at an unidentified app bundle.
+    try:
+        with (app / "Contents/Info.plist").open("rb") as handle:
+            metadata = plistlib.load(handle)
+        if metadata.get("CFBundleIdentifier") != "pro.betterdisplay.BetterDisplay":
+            raise ValueError("Unexpected BetterDisplay bundle identifier")
+    except (OSError, ValueError, TypeError) as exc:
+        print(f"BetterDisplay: ERROR — application metadata invalid: {exc}")
+        return 1
+
+    before_build = str(metadata.get("CFBundleVersion", "?"))
+    command = [
+        str(cli), str(app),
+        "--channels", "arm64_internal,arm64_pre,arm64",
+        "--feed-url",
+        "https://betterdisplay.pro/betterdisplay/sparkle/appcast.xml",
+        "--user-agent-name", "PreviewAppsWorkflow",
+    ]
+    probe = subprocess.run([*command, "--probe"])
+    if probe.returncode == 4:
+        betterdisplay_preference_probe()
+        print("BetterDisplay: CURRENT — native probe found no update for requested channels")
+        print("BetterDisplay: INTERNAL_PREFERENCE_UNVERIFIED — check Settings > Application > Updates")
+        return 0
+    if probe.returncode != 0:
+        print(f"BetterDisplay: ERROR — Sparkle probe exit {probe.returncode}")
+        return probe.returncode
+    result = subprocess.run([*command, "--check-immediately"])
+
+    betterdisplay_preference_probe()
+
+    if result.returncode == 4:
+        # Sparkle's no-update result is not proof that the application's own
+        # Internal Updates preference is enabled. The CLI requested Internal,
+        # Pre-release and stable arm64 channels for THIS check only.
+        print("BetterDisplay: SPARKLE_NO_UPDATE (arm64_internal,arm64_pre,arm64 requested)")
+        print("BetterDisplay: INTERNAL_PREFERENCE_UNVERIFIED — check Settings > Application > Updates")
+        return 0
+
+    if result.returncode == 0:
+        try:
+            with (app / "Contents/Info.plist").open("rb") as handle:
+                updated = plistlib.load(handle)
+            if updated.get("CFBundleIdentifier") != "pro.betterdisplay.BetterDisplay":
+                raise ValueError("Application bundle identifier changed after check")
+            after_build = str(updated.get("CFBundleVersion", "?"))
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"BetterDisplay: ERROR — post-check app metadata invalid: {exc}")
+            return 1
+        if before_build != after_build:
+            print(f"BetterDisplay: UPDATED — build {before_build} -> {after_build}")
+        else:
+            print(f"BetterDisplay: ERROR — update was offered but build did not change ({after_build})")
+            return 1
+        print("BetterDisplay: INTERNAL_PREFERENCE_UNVERIFIED — check Settings > Application > Updates")
+        return 0
+
+    print(f"BetterDisplay: ERROR — Sparkle CLI exit {result.returncode}")
+    return result.returncode
+
+def betterdisplay_preference_probe():
+    """Read-only hints; unknown vendor keys are NOT treated as verified settings."""
+    try:
+        result = subprocess.run(
+            ["/usr/bin/defaults", "export", "pro.betterdisplay.BetterDisplay", "-"],
+            capture_output=True, timeout=8, check=False,
+        )
+        if result.returncode:
+            print("BetterDisplay: native update-channel preference is not externally readable")
+            return
+        values = plistlib.loads(result.stdout)
+        if not isinstance(values, dict):
+            raise ValueError("unexpected defaults format")
+        matches = sorted(
+            (key, value) for key, value in values.items()
+            if isinstance(key, str) and re.search(r"internal|prerelease|pre.?release|update.?channel", key, re.I)
+        )
+        if not matches:
+            print("BetterDisplay: no identifiable internal-channel preference key; app setting remains UNVERIFIED")
+            return
+        for key, value in matches[:6]:
+            if isinstance(value, bool):
+                description = "ON" if value else "OFF"
+            else:
+                description = "present (meaning unverified)"
+            print(f"BetterDisplay: possible native setting {key[:100]} = {description} (key mapping UNVERIFIED)")
+        if len(matches) > 6:
+            print(f"BetterDisplay: {len(matches) - 6} additional candidates omitted")
+    except (OSError, subprocess.TimeoutExpired, ValueError, TypeError, plistlib.InvalidFileException) as exc:
+        print(f"BetterDisplay: native preference probe unavailable ({type(exc).__name__})")
+
+
+_XCODE_CATALOG_ITEM = re.compile(
+    r"^\s*\d+(?:\.\d+){1,4}(?:\s+(?:Beta|Release Candidate|GM Seed|RC)(?:\s+\d+)?)?"
+    r"\s+\([A-Za-z0-9]+\)(?:\s+\[[^]]+\])?(?:\s+\(Installed(?:, Selected)?\))?\s*$",
+    re.I,
+)
+
+
+def _filtered_xcode_lines(stream, raw_log):
+    in_catalog = False
+    omitted = 0
+    for line in stream:
+        raw_log.write(line)
+        if "更新 Xcode 版本目录" in line:
+            in_catalog = True
+        if in_catalog and _XCODE_CATALOG_ITEM.match(line.strip()):
+            omitted += 1
+            continue
+        if in_catalog and ("Showing Xcodes" in line or re.search(r"(?:目标|Xcode|已安装)\s*[:：]", line)):
+            in_catalog = False
+            if omitted:
+                yield f"[Xcode 版本目录已折叠：{omitted} 条，完整内容保存在日志中]\n"
+                omitted = 0
+        yield line
+    if omitted:
+        yield f"[Xcode 版本目录已折叠：{omitted} 条，完整内容保存在日志中]\n"
+
+
+def xcode_beta():
+    command = str(Path.home() / ".local/bin/update-xcode-beta")
+    if not Path(command).is_file():
+        print(f"ERROR: Xcode 更新器不存在：{command}")
+        return 1
+    log_dir = Path.home() / "Library/Logs/TopgradeUpdater"
+    try:
+        log_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        log_path = log_dir / f"xcode-beta-{stamp}.log"
+        flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+        fd = os.open(log_path, flags, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8", errors="replace") as raw_log:
+            with subprocess.Popen(
+                [command, "--apply"], stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, stdin=None, text=True,
+                encoding="utf-8", errors="replace", bufsize=1,
+            ) as process:
+                assert process.stdout is not None
+                for line in _filtered_xcode_lines(process.stdout, raw_log):
+                    print(line, end="", flush=True)
+                result = process.wait()
+        print(f"Xcode 完整运行日志：{log_path}")
+        return result
+    except OSError as exc:
+        print(f"ERROR: Xcode 输出转发失败：{exc}")
+        return 1
+
+
+def self_test():
+    demo = [
+        "=== 更新 Xcode 版本目录 ===\n", "1.0 (7B85)\n", "27.0 Beta (27A5194q) [Apple Silicon]\n",
+        "27.2 Beta 2 (27B5028f) [Apple Silicon] (Installed, Selected)\n",
+        "Showing Xcodes for this Mac\n", "目标：27.2 Beta 2\n", "Xcode: CURRENT\n",
+    ]
+    raw = io.StringIO()
+    filtered = "".join(_filtered_xcode_lines(demo, raw))
+    assert "折叠：3 条" in filtered and "Xcode: CURRENT" in filtered
+    assert "1.0 (7B85)" not in filtered and "1.0 (7B85)" in raw.getvalue()
+    assert _XCODE_CATALOG_ITEM.match("27.2 Beta 2 (27B5028f) [Apple Silicon] (Installed, Selected)")
+    print("SELF-TEST: PASS (Xcode catalogue folding and original log preservation)")
+
+if __name__ == "__main__":
+    try:
+        if sys.argv[1:] == ["--self-test"]:
+            self_test()
+            sys.exit(0)
+        if sys.argv[1:] == ["--betterdisplay"]:
+            sys.exit(betterdisplay())
+        if sys.argv[1:] == ["--xcode"]:
+            sys.exit(xcode_beta())
+        print("用法：update-preview-extras --betterdisplay|--xcode")
+        sys.exit(2)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)

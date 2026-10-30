@@ -1,0 +1,5 @@
+[misc]
+disable = ["brew_formula"]
+
+[commands]
+"Homebrew Formulae (HEAD-synced)" = "$HOME/.local/bin/brew-headsync-upgrade"

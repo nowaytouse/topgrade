@@ -1,0 +1,40 @@
+#!/bin/bash
+# proxy-auto-gradle-wrapper
+set -uo pipefail
+
+RUN="$HOME/.local/bin/proxy-auto-run"
+REAL="$HOME/.local/libexec/rolling-deps/update-gradle-nightly.real.py"
+CACHED="$HOME/.local/bin/gradle-nightly"
+
+tmp="$(umask 077; mktemp "${TMPDIR:-/tmp}/gradle-nightly.XXXXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+
+set +e
+
+"$RUN" python3 -u "$REAL" "$@" \
+  2>&1 | tee "$tmp"
+
+rc="${PIPESTATUS[0]}"
+
+set -e
+
+if [[ "$rc" -eq 0 ]]; then
+    exit 0
+fi
+
+if [[ -x "$CACHED" ]] &&
+   "$CACHED" --version >/dev/null 2>&1 &&
+   grep -Eiq \
+     'RETRYABLE|SSLEOFError|urlopen error|connection refused|timed out|timeout|temporary failure|network is unreachable|name or service not known|could not resolve|tls handshake|connection reset by peer' \
+     "$tmp"; then
+
+    echo
+    echo "Gradle: CACHED_FALLBACK — 上游检查失败，沿用已验证的本地运行时（不代表最新）。"
+
+    "$CACHED" --version |
+      sed -n '1,8p'
+
+    exit "$rc"
+fi
+
+exit "$rc"

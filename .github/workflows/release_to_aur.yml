@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   aur-publish:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
     steps:
       - name: Determine version

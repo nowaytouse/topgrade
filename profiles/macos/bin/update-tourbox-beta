@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+import argparse
+import fcntl
+import hashlib
+import html
+import json
+import os
+import plistlib
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import zipfile
+from datetime import datetime
+from pathlib import Path
+
+PAGE = "https://www.tourboxtech.com/jp/downloads/macos/"
+STATE = Path.home() / ".local/state/tourbox-beta.json"
+
+PATTERN = re.compile(
+    r"https://cdn\.tourboxtech\.com/prod/console/"
+    r"TourBoxInstall"
+    r"(?P<version>\d+(?:\.\d+){2})"
+    r"Beta(?P<beta>\d+(?:\.\d+)*)"
+    r"_arm64_(?P<stamp>\d+)\.zip",
+    re.I,
+)
+
+def execute(command, **kwargs):
+    return subprocess.run(command, check=True, **kwargs)
+
+def discover():
+    page = subprocess.check_output(
+        [
+            "/usr/bin/curl",
+            "-fsSL",
+            "--compressed",
+            "--retry", "2",
+            "--connect-timeout", "15",
+            "--max-time", "60",
+            PAGE,
+        ],
+        text=True,
+    )
+
+    page = html.unescape(page).replace("\\/", "/")
+    candidates = []
+
+    for match in PATTERN.finditer(page):
+        version = match.group("version")
+        beta = match.group("beta")
+        url = match.group(0)
+
+        key = (
+            tuple(map(int, version.split("."))),
+            tuple(map(int, beta.split("."))),
+            int(match.group("stamp")),
+        )
+
+        candidates.append((key, version, beta, url))
+
+    if not candidates:
+        raise RuntimeError("官网未找到 ARM64 Beta 安装包")
+
+    _, version, beta, url = max(candidates)
+
+    return version, beta, url
+
+def app_details():
+    for app in Path("/Applications").glob("*TourBox*.app"):
+        info = app / "Contents/Info.plist"
+
+        try:
+            with info.open("rb") as file:
+                data = plistlib.load(file)
+        except (OSError, ValueError):
+            continue
+
+        bundle_id = str(data.get("CFBundleIdentifier", ""))
+
+        if "tourbox" not in bundle_id.lower():
+            continue
+
+        return {
+            "path": app,
+            "id": bundle_id,
+            "version": str(
+                data.get("CFBundleShortVersionString", "")
+            ),
+            "build": str(data.get("CFBundleVersion", "")),
+        }
+
+    return None
+
+def app_team(app):
+    result = subprocess.run(
+        [
+            "/usr/bin/codesign",
+            "-dv",
+            "--verbose=4",
+            str(app),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    match = re.search(
+        r"TeamIdentifier=([A-Z0-9]{10})",
+        result.stdout + result.stderr,
+    )
+
+    if not match:
+        raise RuntimeError("无法确认现有 TourBox 的签名团队")
+
+    return match.group(1)
+
+def package_team(pkg):
+    result = subprocess.check_output(
+        ["/usr/sbin/pkgutil", "--check-signature", str(pkg)],
+        text=True,
+        stderr=subprocess.STDOUT,
+    )
+
+    print(result, flush=True)
+
+    status = re.search(
+        r"(?m)^\s*Status:\s*(.+?)\s*$",
+        result,
+    )
+
+    accepted = {
+        "signed by a developer certificate issued by apple for distribution",
+        "signed by a certificate trusted by mac os x",
+        "signed by a certificate trusted by macos",
+    }
+
+    if not status or status.group(1).strip().lower() not in accepted:
+        raise RuntimeError("PKG 签名状态不符合预期")
+
+    if not re.search(
+        r"(?m)^\s*Notarization:\s*trusted by the Apple notary service\s*$",
+        result,
+        re.I,
+    ):
+        raise RuntimeError("PKG 未通过 Apple 公证验证")
+
+    match = re.search(
+        r"(?m)^\s*1\.\s*Developer ID Installer:"
+        r".*\(([A-Z0-9]{10})\)",
+        result,
+    )
+
+    if not match:
+        raise RuntimeError("PKG 缺少有效的 Developer ID Installer 身份")
+
+    return match.group(1)
+
+def load_state():
+    try:
+        return json.loads(STATE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+def save_state(data):
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+
+    fd, name = tempfile.mkstemp(
+        prefix=".tourbox-state-",
+        dir=STATE.parent,
+    )
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)
+
+        os.chmod(name, 0o600)
+        os.replace(name, STATE)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+def backup_presets():
+    source = (
+        Path.home()
+        / "Library/Application Support/TourBox Console"
+    )
+
+    if not source.is_dir():
+        print("未找到默认预设目录，跳过预设备份")
+        return
+
+    directory = (
+        Path.home()
+        / ".local/share/tourbox-beta/backups"
+    )
+    directory.mkdir(parents=True, exist_ok=True)
+
+    target = directory / (
+        "TourBox-"
+        + datetime.now().strftime("%Y%m%d-%H%M%S")
+        + ".tar.gz"
+    )
+
+    print("备份预设：", target, flush=True)
+
+    with tarfile.open(target, "w:gz") as archive:
+        archive.add(source, arcname="TourBox Console")
+
+    os.chmod(target, 0o600)
+
+def apply(version, beta, url, before):
+    if before is None:
+        raise RuntimeError(
+            "找不到现有 TourBox Console，"
+            "无法校验安装包与现有应用的开发者身份"
+        )
+
+    expected_team = app_team(before["path"])
+
+    with tempfile.TemporaryDirectory(
+        prefix="tourbox-beta-"
+    ) as temporary:
+
+        root = Path(temporary)
+        downloaded = root / "TourBoxBeta.zip"
+        extracted = root / "extracted"
+        extracted.mkdir()
+
+        print("=== 下载官方 ARM64 Beta ===", flush=True)
+
+        execute([
+            "/usr/bin/curl",
+            "-fL",
+            "--retry", "3",
+            "--connect-timeout", "20",
+            "--max-time", "1800",
+            "--progress-bar",
+            "-o", str(downloaded),
+            url,
+        ])
+
+        if downloaded.stat().st_size < 100000:
+            raise RuntimeError("下载文件大小异常")
+
+        print("=== 验证 ZIP 结构 ===", flush=True)
+
+        with zipfile.ZipFile(downloaded) as archive:
+            for entry in archive.infolist():
+                path = entry.filename.replace("\\", "/")
+                segments = path.split("/")
+
+                if path.startswith("/") or ".." in segments:
+                    raise RuntimeError("ZIP 包含不安全路径")
+
+        execute([
+            "/usr/bin/ditto",
+            "-x", "-k",
+            str(downloaded),
+            str(extracted),
+        ])
+
+        packages = [
+            path
+            for path in extracted.rglob("*.pkg")
+            if path.is_file() or path.is_dir()
+        ]
+
+        if len(packages) != 1:
+            raise RuntimeError(
+                f"预期找到一个 PKG，实际找到 {len(packages)} 个"
+            )
+
+        package = packages[0]
+
+        print("=== 验证安装包签名 ===", flush=True)
+
+        signed_team = package_team(package)
+
+        if signed_team != expected_team:
+            raise RuntimeError(
+                "安装包签名团队与现有 TourBox 不一致："
+                f"{signed_team} != {expected_team}"
+            )
+
+        print("签名团队验证通过：", signed_team)
+
+        checksum = hashlib.file_digest(
+            downloaded.open("rb"), "sha256"
+        ).hexdigest()
+
+        print("SHA256:", checksum)
+
+        print("=== 备份预设 ===", flush=True)
+        backup_presets()
+
+        print("=== 安装 TourBox Console Beta ===", flush=True)
+
+        execute([
+            "sudo",
+            "/usr/sbin/installer",
+            "-pkg", str(package),
+            "-target", "/",
+        ])
+
+    print("=== 安装后验证 ===", flush=True)
+
+    after = app_details()
+
+    if after is None:
+        raise RuntimeError("安装后找不到 TourBox Console")
+
+    if not re.match(
+        r"^" + re.escape(version) + r"(?:$|[^0-9.])",
+        after["version"],
+    ):
+        raise RuntimeError(
+            f"版本不匹配：目标 {version}，"
+            f"实际 {after['version']}"
+        )
+
+    execute([
+        "/usr/bin/codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        str(after["path"]),
+    ])
+
+    if app_team(after["path"]) != expected_team:
+        raise RuntimeError("安装后应用签名团队发生变化")
+
+    save_state({
+        "version": version,
+        "beta": beta,
+        "url": url,
+        "sha256": checksum,
+        "app_id": after["id"],
+        "app_version": after["version"],
+        "app_build": after["build"],
+        "team": expected_team,
+    })
+
+    print(
+        f"TourBox: INSTALLED — {version} Beta {beta}",
+        flush=True,
+    )
+    print("应用路径：", after["path"])
+    return 0
+
+def main():
+    parser = argparse.ArgumentParser()
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--check", action="store_true")
+    modes.add_argument("--apply", action="store_true")
+    args = parser.parse_args()
+
+    lock = Path.home() / ".cache/tourbox-beta.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+
+    with lock.open("a+") as handle:
+        try:
+            fcntl.flock(
+                handle.fileno(),
+                fcntl.LOCK_EX | fcntl.LOCK_NB,
+            )
+        except BlockingIOError:
+            raise RuntimeError("已有 TourBox 更新任务正在运行")
+
+        version, beta, url = discover()
+        current = app_details()
+        state = load_state()
+
+        print(f"官方目标：{version} Beta {beta}")
+        print(f"下载地址：{url}")
+
+        if current:
+            print(
+                f"本机版本：{current['version']} "
+                f"(build {current['build']})"
+            )
+
+        same_install = (
+            current is not None
+            and state.get("url") == url
+            and state.get("app_id") == current["id"]
+            and state.get("app_version") == current["version"]
+            and state.get("app_build") == current["build"]
+        )
+
+        if same_install:
+            print("TourBox: CURRENT")
+            return 0
+
+        if current:
+            match = re.match(
+                r"^(\d+(?:\.\d+){2})",
+                current["version"],
+            )
+
+            if match:
+                local_version = tuple(
+                    map(int, match.group(1).split("."))
+                )
+                target_version = tuple(
+                    map(int, version.split("."))
+                )
+
+                if local_version > target_version:
+                    print("TourBox: SKIPPED — 本机版本更新")
+                    return 0
+
+        if args.check:
+            print("TourBox: UPDATE_AVAILABLE / UNVERIFIED")
+            print("只读检查完成；未下载安装")
+            return 0
+
+        return apply(version, beta, url, current)
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (
+        OSError,
+        RuntimeError,
+        subprocess.CalledProcessError,
+        zipfile.BadZipFile,
+    ) as error:
+        print("TourBox: ERROR —", error, file=sys.stderr)
+        sys.exit(1)

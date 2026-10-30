@@ -1,0 +1,77 @@
+#!/bin/zsh
+set -euo pipefail
+
+SRC="$HOME/Developer/sqlite-git"
+BIN="$HOME/.local/bin/sqlite3-trunk"
+STATE="$HOME/.local/state/sqlite-trunk/revision"
+
+# Require an existing, valid Git checkout.
+if [[ ! -d "$SRC/.git" || ! -f "$SRC/configure" ]]; then
+    echo "SQLite Git source is missing or incomplete: $SRC" >&2
+    exit 1
+fi
+
+# Never overwrite local source modifications.
+if [[ -n "$(git -C "$SRC" status --porcelain)" ]]; then
+    echo "SQLite source has local modifications; update aborted." >&2
+    exit 1
+fi
+
+# Follow the official Git mirror's master branch.
+git -C "$SRC" pull --ff-only origin master
+REV="$(git -C "$SRC" rev-parse HEAD)"
+
+if [[ -x "$BIN" && -f "$STATE" ]] &&
+   [[ "$(cat "$STATE")" == "$REV" ]]; then
+    echo "SQLite trunk is already up to date: $REV"
+    exit 0
+fi
+
+echo "Building SQLite trunk: $REV"
+
+mkdir -p "${BIN:h}" "${STATE:h}"
+
+# Use a clean, isolated build directory.
+WORK="$(mktemp -d "$HOME/Developer/.sqlite-build.XXXXXXXX")"
+TMP=""
+
+cleanup() {
+    if [[ -n "$TMP" ]]; then
+        rm -f -- "$TMP"
+    fi
+    if [[ -n "$WORK" ]]; then
+        rm -rf -- "$WORK"
+    fi
+}
+trap cleanup EXIT
+
+cd "$WORK"
+
+"$SRC/configure" --enable-all
+make -j"$(sysctl -n hw.ncpu)" sqlite3
+
+# Test the newly built executable.
+RESULT="$(./sqlite3 ':memory:' \
+    'CREATE TABLE test (id INTEGER PRIMARY KEY);
+     INSERT INTO test VALUES (1);
+     SELECT id FROM test;
+     PRAGMA quick_check;')"
+
+if [[ "$RESULT" != $'1\nok' ]]; then
+    echo "SQLite verification failed: $RESULT" >&2
+    exit 1
+fi
+
+# Install only after a successful build and verification.
+TMP="$(mktemp "${BIN}.tmp.XXXXXX")"
+cp ./sqlite3 "$TMP"
+chmod 755 "$TMP"
+mv -f -- "$TMP" "$BIN"
+TMP=""
+
+# Record the installed revision.
+printf '%s\n' "$REV" > "${STATE}.tmp"
+mv -f -- "${STATE}.tmp" "$STATE"
+
+echo "SQLite trunk successfully installed: $REV"
+"$BIN" --version

@@ -1,0 +1,276 @@
+#!/usr/bin/env python3
+import argparse
+import fcntl
+import os
+import plistlib
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+def run(args, **kwargs):
+    return subprocess.run(args, check=True, **kwargs)
+
+def bundle_id(app):
+    try:
+        with (app / "Contents/Info.plist").open("rb") as f:
+            return plistlib.load(f).get("CFBundleIdentifier")
+    except (OSError, ValueError, plistlib.InvalidFileException):
+        return None
+
+def actual_build(app):
+    if bundle_id(app) != "com.apple.dt.Xcode":
+        return None
+
+    dev = app / "Contents/Developer"
+    if not dev.is_dir():
+        return None
+
+    env = os.environ.copy()
+    env["DEVELOPER_DIR"] = str(dev)
+
+    result = subprocess.run(
+        ["/usr/bin/xcodebuild", "-version"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    if result.returncode:
+        return None
+
+    match = re.search(
+        r"^Build version ([A-Za-z0-9]+)$",
+        result.stdout,
+        re.MULTILINE,
+    )
+
+    return match.group(1) if match else None
+
+def installed(build):
+    for app in sorted(Path("/Applications").glob("Xcode*.app")):
+        if actual_build(app) == build:
+            return app
+    return None
+
+def latest_beta():
+    print("=== 更新 Xcode 版本目录 ===", flush=True)
+    run(["xcodes", "update"])
+
+    listing = subprocess.check_output(
+        ["xcodes", "list"],
+        text=True,
+    )
+
+    pattern = re.compile(
+        r"^\s*(\d+(?:\.\d+){1,2})\s+Beta"
+        r"(?:\s+(\d+))?\s+"
+        r"\(([A-Za-z0-9]+)\)\s+\[Apple Silicon\]"
+    )
+
+    candidates = []
+
+    for line in listing.splitlines():
+        match = pattern.match(line)
+        if not match:
+            continue
+
+        version, beta, build = match.groups()
+        beta = int(beta or 1)
+
+        parts = tuple(int(x) for x in version.split("."))
+        key = (parts + (0,) * (3 - len(parts)), beta)
+
+        name = version + " Beta"
+        if beta > 1:
+            name += f" {beta}"
+
+        candidates.append((key, version, beta, build, name))
+
+    if not candidates:
+        raise RuntimeError("未找到 Apple Silicon Xcode Beta")
+
+    _, version, beta, build, name = max(candidates)
+
+    return version, beta, build, name
+
+def verify(app, expected):
+    build = actual_build(app)
+
+    if build != expected:
+        raise RuntimeError(
+            f"构建号不匹配：预期 {expected}，实际 {build}"
+        )
+
+    run([
+        "/usr/bin/codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        str(app),
+    ])
+
+def install(version, beta, build, name):
+    dest = Path(
+        f"/Applications/Xcode-{version}-Beta{beta}-{build}.app"
+    )
+
+    if dest.exists():
+        raise RuntimeError(
+            f"安装目标已存在但未通过已有构建扫描：{dest}"
+        )
+
+    downloads = Path.home() / "Downloads"
+
+    with tempfile.TemporaryDirectory(
+        prefix=".xcode-beta-",
+        dir=str(downloads),
+    ) as workspace:
+
+        workspace = Path(workspace)
+        archives = workspace / "archives"
+        expanded = workspace / "expanded"
+
+        archives.mkdir()
+        expanded.mkdir()
+
+        print(f"=== 自动下载 {name} ({build}) ===", flush=True)
+
+        run([
+            "xcodes",
+            "download",
+            name,
+            "--directory",
+            str(archives),
+        ])
+
+        xips = list(archives.glob("*.xip"))
+
+        if len(xips) != 1:
+            raise RuntimeError(
+                f"下载目录中预期恰好一个 XIP，实际 {len(xips)} 个"
+            )
+
+        print("=== 解压 XIP ===", flush=True)
+
+        run(
+            ["/usr/bin/xip", "--expand", str(xips[0])],
+            cwd=expanded,
+        )
+
+        apps = [
+            app for app in expanded.glob("*.app")
+            if bundle_id(app) == "com.apple.dt.Xcode"
+        ]
+
+        if len(apps) != 1:
+            raise RuntimeError(
+                "解压后未找到唯一的官方 Xcode 应用"
+            )
+
+        source = apps[0]
+        print(f"识别到：{source.name}", flush=True)
+
+        print("=== 安装前验证 ===", flush=True)
+        verify(source, build)
+
+        pending = Path(
+            f"/Applications/.Xcode-{version}-Beta{beta}-"
+            f"{build}-{os.getpid()}.installing.app"
+        )
+
+        if pending.exists():
+            raise RuntimeError("临时安装目标已存在")
+
+        try:
+            print("=== 复制到临时安装位置 ===", flush=True)
+
+            run([
+                "sudo",
+                "/usr/bin/ditto",
+                str(source),
+                str(pending),
+            ])
+
+            verify(pending, build)
+
+            if dest.exists():
+                raise RuntimeError("安装目标被其他进程占用")
+
+            print("=== 提交正式安装 ===", flush=True)
+
+            run([
+                "sudo",
+                "/bin/mv",
+                "-n",
+                str(pending),
+                str(dest),
+            ])
+
+            if pending.exists():
+                raise RuntimeError("无法提交正式安装")
+
+            verify(dest, build)
+
+        finally:
+            if pending.exists():
+                subprocess.run([
+                    "sudo",
+                    "/bin/rm",
+                    "-rf",
+                    str(pending),
+                ], check=False)
+
+    print(f"Xcode: INSTALLED — {name} ({build})")
+    print(f"安装路径：{dest}")
+    print("未修改 xcode-select")
+    return 0
+
+def main():
+    parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--check", action="store_true")
+    mode.add_argument("--apply", action="store_true")
+    args = parser.parse_args()
+
+    lock = Path.home() / ".cache/xcode-beta-updater.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+
+    with lock.open("a+") as handle:
+        try:
+            fcntl.flock(
+                handle.fileno(),
+                fcntl.LOCK_EX | fcntl.LOCK_NB,
+            )
+        except BlockingIOError:
+            raise RuntimeError("另一个 Xcode 更新任务正在运行")
+
+        version, beta, build, name = latest_beta()
+
+        print(f"目标：{name} ({build})", flush=True)
+
+        existing = installed(build)
+
+        if existing:
+            print(f"Xcode: CURRENT — {name} ({build})")
+            print(f"已安装：{existing}")
+            return 0
+
+        if args.check:
+            print(f"Xcode: UPDATE_AVAILABLE — {name} ({build})")
+            print("只检查，未执行下载安装")
+            return 0
+
+        return install(version, beta, build, name)
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (
+        OSError,
+        RuntimeError,
+        subprocess.CalledProcessError,
+    ) as exc:
+        print(f"Xcode: ERROR — {exc}", file=sys.stderr)
+        sys.exit(1)

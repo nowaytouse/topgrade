@@ -1,0 +1,302 @@
+#!/opt/homebrew/opt/python@3.15/bin/python3.15
+import hashlib
+import os
+import re
+import shutil
+import site
+import subprocess
+import sys
+import sysconfig
+import tempfile
+import tomllib
+from datetime import datetime
+from pathlib import Path
+
+HOME = Path.home()
+PYTHON = Path("/opt/homebrew/opt/python@3.15/bin/python3.15")
+SOURCE = HOME / "Developer/sqlite-git"
+CLI = HOME / ".local/bin/sqlite3-trunk"
+UPDATER = HOME / ".local/bin/update-sqlite-trunk"
+ROOT = HOME / ".local/share/sqlite-python-trunk"
+CURRENT = ROOT / "current"
+CONFIG = HOME / ".config/topgrade.toml"
+
+PROBE = """
+import sqlite3
+import _sqlite3
+import sys
+from pathlib import Path
+
+expected_source, expected_dir = sys.argv[1:3]
+actual_dir = Path(_sqlite3.__file__).resolve().parent
+assert actual_dir == Path(expected_dir).resolve(), (
+    f"Unexpected extension: {_sqlite3.__file__}"
+)
+
+db = sqlite3.connect(":memory:")
+actual_source = db.execute(
+    "SELECT sqlite_source_id()"
+).fetchone()[0]
+
+assert actual_source == expected_source, (
+    f"SQLite source mismatch: {actual_source}"
+)
+
+assert db.execute(
+    "PRAGMA quick_check"
+).fetchone()[0] == "ok"
+
+db.execute("CREATE VIRTUAL TABLE docs USING fts5(body)")
+db.execute("INSERT INTO docs VALUES ('sqlite trunk')")
+assert db.execute(
+    "SELECT count(*) FROM docs WHERE docs MATCH 'trunk'"
+).fetchone()[0] == 1
+
+print("Python SQLite:", sqlite3.sqlite_version)
+print("SQLite source:", actual_source)
+print("SQLite extension:", _sqlite3.__file__)
+print("Verification: OK")
+"""
+
+def run(*args, **kwargs):
+    return subprocess.run(args, check=True, **kwargs)
+
+def capture(*args):
+    return subprocess.check_output(args, text=True).strip()
+
+def verify(directory, isolated, source_id):
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+
+    args = [str(PYTHON)]
+    if isolated:
+        args.append("-S")
+        env["PYTHONPATH"] = str(directory)
+
+    args += [
+        "-c", PROBE,
+        source_id,
+        str(directory),
+    ]
+
+    run(*args, env=env)
+
+def atomic_symlink(target, link):
+    fd, name = tempfile.mkstemp(
+        prefix=".current-",
+        dir=ROOT,
+    )
+    os.close(fd)
+    os.unlink(name)
+
+    try:
+        os.symlink(str(target), name)
+        os.replace(name, link)
+    finally:
+        if os.path.lexists(name):
+            os.unlink(name)
+
+def configure_topgrade():
+    original = CONFIG.read_text() if CONFIG.exists() else ""
+    parsed = tomllib.loads(original) if original.strip() else {}
+
+    expected = "$HOME/.local/bin/update-python-sqlite-trunk"
+    commands = parsed.get("commands", {})
+    existing = commands.get("SQLite Python trunk")
+
+    if existing is not None:
+        if existing != expected:
+            raise RuntimeError(
+                "Topgrade contains a different SQLite Python command"
+            )
+        return
+
+    entry = f'"SQLite Python trunk" = "{expected}"'
+
+    match = re.search(
+        r"(?m)^\[commands\][ \t]*(?:#.*)?$",
+        original,
+    )
+
+    if match:
+        updated = (
+            original[:match.end()]
+            + "\n" + entry
+            + original[match.end():]
+        )
+    else:
+        updated = (
+            original.rstrip()
+            + "\n\n[commands]\n"
+            + entry + "\n"
+        )
+
+    tomllib.loads(updated)
+    CONFIG.parent.mkdir(parents=True, exist_ok=True)
+
+    if CONFIG.exists():
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        shutil.copy2(
+            CONFIG,
+            CONFIG.with_name(CONFIG.name + ".bak-" + stamp),
+        )
+
+    fd, tmp = tempfile.mkstemp(
+        prefix=".topgrade-",
+        dir=CONFIG.parent,
+    )
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(updated)
+        os.replace(tmp, CONFIG)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+# Validate the intended Python and user-site environment.
+if sys.version_info[:2] != (3, 15):
+    raise SystemExit("Requires Python 3.15")
+
+if site.ENABLE_USER_SITE is not True:
+    raise SystemExit("Python user site-packages is disabled")
+
+if not SOURCE.is_dir():
+    raise SystemExit("SQLite source checkout is missing")
+
+if not os.access(UPDATER, os.X_OK):
+    raise SystemExit("Existing SQLite updater is unavailable")
+
+if CURRENT.exists() and not CURRENT.is_symlink():
+    raise SystemExit("Refusing to replace a non-symlink current path")
+
+suffix = sysconfig.get_config_var("EXT_SUFFIX")
+stdlib = Path(sysconfig.get_path("stdlib"))
+original_ext = stdlib / "lib-dynload" / ("_sqlite3" + suffix)
+
+if not original_ext.is_file():
+    raise SystemExit("Original Python _sqlite3 extension not found")
+
+old_library = "/opt/homebrew/opt/sqlite/lib/libsqlite3.dylib"
+
+if old_library not in capture("otool", "-L", str(original_ext)):
+    raise SystemExit("Unexpected Python SQLite library linkage")
+
+user_site = Path(site.getusersitepackages())
+pth = user_site / "00-sqlite-trunk.pth"
+pth_content = (
+    "import sys; sys.path.insert(0, "
+    + repr(str(CURRENT))
+    + ")\n"
+)
+
+if pth.exists() and pth.read_text() != pth_content:
+    raise SystemExit("Existing SQLite .pth differs; not overwriting")
+
+ROOT.mkdir(parents=True, exist_ok=True)
+
+print("── Update SQLite CLI ──")
+run(str(UPDATER))
+
+revision = capture("git", "-C", str(SOURCE), "rev-parse", "HEAD")
+extension_hash = hashlib.sha256(
+    original_ext.read_bytes()
+).hexdigest()[:12]
+
+release = ROOT / "releases" / (
+    revision + "-" + extension_hash
+)
+
+source_id = capture(
+    str(CLI),
+    "-batch",
+    "-noheader",
+    "-init",
+    "/dev/null",
+    ":memory:",
+    "SELECT sqlite_source_id();",
+)
+
+if not release.is_dir():
+    print("── Build SQLite trunk library ──")
+
+    ROOT.joinpath("releases").mkdir(exist_ok=True)
+
+    with tempfile.TemporaryDirectory(
+        prefix=".sqlite-build-",
+        dir=ROOT,
+    ) as temp:
+        temp = Path(temp)
+        build = temp / "build"
+        runtime = temp / "runtime"
+        build.mkdir()
+        runtime.mkdir()
+
+        run(str(SOURCE / "configure"), "--enable-all", cwd=build)
+
+        run(
+            "make",
+            "-j", str(os.cpu_count() or 4),
+            "libsqlite3.dylib",
+            cwd=build,
+        )
+
+        library = build / "libsqlite3.dylib"
+        if not library.is_file():
+            raise RuntimeError("SQLite shared library was not produced")
+
+        shutil.copy2(library, runtime / "libsqlite3.dylib")
+
+        patched_ext = runtime / original_ext.name
+        shutil.copy2(original_ext, patched_ext)
+
+        run(
+            "install_name_tool",
+            "-change",
+            old_library,
+            "@loader_path/libsqlite3.dylib",
+            str(patched_ext),
+        )
+
+        run(
+            "codesign",
+            "--force",
+            "--sign", "-",
+            str(patched_ext),
+        )
+
+        print("── Verify isolated Python module ──")
+        verify(runtime, True, source_id)
+
+        shutil.move(str(runtime), str(release))
+
+# Make the new version active only after validation.
+previous = os.readlink(CURRENT) if CURRENT.is_symlink() else None
+created_pth = False
+
+try:
+    atomic_symlink(release, CURRENT)
+
+    if not pth.exists():
+        user_site.mkdir(parents=True, exist_ok=True)
+        pth.write_text(pth_content)
+        created_pth = True
+
+    print("── Verify default Python ──")
+    verify(CURRENT, False, source_id)
+
+    configure_topgrade()
+
+except Exception:
+    # Restore the previous Python configuration on failure.
+    if previous is not None:
+        atomic_symlink(previous, CURRENT)
+    elif CURRENT.is_symlink():
+        CURRENT.unlink()
+
+    if created_pth:
+        pth.unlink()
+
+    raise
+
+print("✅ Python 3.15 now uses SQLite trunk")
+print("✅ Topgrade integration configured")

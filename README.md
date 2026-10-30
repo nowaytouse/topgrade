@@ -13,6 +13,12 @@
   <img alt="Demo" src="https://github.com/topgrade-rs/topgrade/blob/main/doc/topgrade_demo.gif?raw=true">
 </div>
 
+## macOS device fork
+
+This fork tracks `topgrade-rs/topgrade` and includes a versioned [macOS device profile](profiles/macos/README.md): verified updater scripts, configuration, installation backups and rollback checks. Its Rust changes keep Helm updates single-shot and allow the profile's verified repository updater. The installation links below describe upstream distributions; use the device profile to install this fork and its companions.
+
+Merge upstream changes into this fork's `main` after reviewing conflicts and running its checks. The profile self-updater follows this fork's exact Git revision and retains previous working releases. Private device settings and runtime state stay outside the repository.
+
 ## Introduction
 
 > [!NOTE]

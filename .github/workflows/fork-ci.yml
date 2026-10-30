@@ -1,0 +1,69 @@
+name: Fork macOS verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_NET_RETRY: 3
+  CARGO_TERM_COLOR: always
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+jobs:
+  verify:
+    if: github.repository == 'nowaytouse/topgrade'
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: fork-macos-nightly
+
+      - name: Format
+        run: cargo +nightly fmt --all -- --check
+
+      - name: Clippy
+        run: cargo +nightly clippy --locked --all-targets --all-features -- --deny warnings
+
+      - name: Rust tests
+        run: cargo +nightly test --locked
+
+      - name: Install current Python from a bottle
+        run: brew install --force-bottle python@3.15
+
+      - name: Profile syntax
+        run: |
+          profile_python="$(brew --prefix python@3.15)/bin/python3.15"
+          "$profile_python" -m compileall -q profiles/macos
+          for script in profiles/macos/bin/*; do
+            case "$(head -n 1 "$script")" in
+              *python*) "$profile_python" -c 'import ast,pathlib,sys; ast.parse(pathlib.Path(sys.argv[1]).read_bytes(), filename=sys.argv[1])' "$script" ;;
+              *zsh*) zsh -n "$script" ;;
+              *bash*|*"/sh") bash -n "$script" ;;
+            esac
+          done
+
+      - name: Profile regression tests
+        run: '"$(brew --prefix python@3.15)/bin/python3.15" -m unittest discover -s profiles/macos/tests -p "test_*.py" -v'

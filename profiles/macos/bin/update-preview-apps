@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 "$HOME/.local/libexec/preview-apps/update-preview-apps.py" "$@"

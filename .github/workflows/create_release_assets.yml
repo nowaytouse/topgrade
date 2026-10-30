@@ -15,6 +15,7 @@ defaults:
 jobs:
   # Publish release files for CD native environments
   native_build:
+    if: github.repository == 'topgrade-rs/topgrade'
     permissions:
       # Used to sign the release artifacts
       id-token: write
@@ -144,6 +145,7 @@ jobs:
 
   # Publish release files for non-CD-native environments
   cross_build:
+    if: github.repository == 'topgrade-rs/topgrade'
     permissions:
       # Used to sign the release artifacts
       id-token: write
@@ -289,6 +291,7 @@ jobs:
 
   # Publish release files for OpenBSD
   openbsd_build:
+    if: github.repository == 'topgrade-rs/topgrade'
     permissions:
       id-token: write
       contents: write
@@ -375,6 +378,7 @@ jobs:
           subject-path: assets/*
 
   publish:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
     needs: [native_build, cross_build, openbsd_build]
     env:
@@ -391,6 +395,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   triggers:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
     needs: [publish]
     env:

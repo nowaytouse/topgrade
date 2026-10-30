@@ -1,0 +1,276 @@
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
+
+readonly HOME_BIN="$HOME/.local/bin"
+readonly DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+readonly BASE="$DATA_HOME/topgrade-rustup-head"
+readonly RELEASES="$BASE/releases"
+readonly LINK="$HOME_BIN/topgrade"
+readonly PREVIOUS="$BASE/previous-target"
+readonly REPO="https://github.com/nowaytouse/topgrade.git"
+readonly CARGO="$HOME/.cargo/bin/cargo"
+readonly RUSTUP="$HOME/.cargo/bin/rustup"
+GIT="$(command -v git || true)"
+
+MODE="${1:-update}"
+STAGE=""
+PREVIOUS_SNAPSHOT=""
+PREVIOUS_ORIGINAL_PRESENT=0
+PREVIOUS_CHANGED=0
+ACTIVE_TARGET=""
+
+die() {
+    printf 'ERROR: %s\n' "$*" >&2
+    exit 1
+}
+
+readonly GIT
+
+restore_previous_if_old_target_is_active() {
+    (( PREVIOUS_CHANGED )) || return 0
+
+    local current=""
+    if [[ -L "$LINK" ]]; then
+        current="$(readlink "$LINK")" || return 1
+    elif [[ -e "$LINK" ]]; then
+        return 1
+    fi
+
+    # Keep the new rollback target if the new release is still active; restore
+    # the exact prior record only when the old target was restored or unchanged.
+    [[ "$current" == "$ACTIVE_TARGET" ]] || return 0
+    if (( PREVIOUS_ORIGINAL_PRESENT )); then
+        local restore_tmp
+        restore_tmp="$(mktemp "$BASE/.previous-target.restore.XXXXXXXX")" || return 1
+        if ! cp -p "$PREVIOUS_SNAPSHOT" "$restore_tmp" ||
+           ! mv -f "$restore_tmp" "$PREVIOUS"; then
+            rm -f "$restore_tmp"
+            return 1
+        fi
+    else
+        [[ ! -L "$PREVIOUS" ]] || return 1
+        rm -f "$PREVIOUS" || return 1
+    fi
+    PREVIOUS_CHANGED=0
+}
+
+cleanup() {
+    local rc=$?
+    trap - EXIT
+    if (( rc != 0 )) && (( PREVIOUS_CHANGED )); then
+        restore_previous_if_old_target_is_active || {
+            printf 'ERROR: could not restore the previous-target record after failed switch\n' >&2
+            rc=1
+        }
+    fi
+    if [[ -n "$PREVIOUS_SNAPSHOT" ]]; then
+        rm -f "$PREVIOUS_SNAPSHOT" || rc=1
+    fi
+    if [[ -n "$STAGE" && -d "$STAGE" ]]; then
+        rm -r "$STAGE" || rc=1
+    fi
+    exit "$rc"
+}
+trap cleanup EXIT
+
+is_managed_target() {
+    local target="$1"
+    local relative revision
+    [[ "$target" == "$RELEASES/"* ]] || return 1
+    relative="${target#"$RELEASES"/}"
+    [[ "$relative" == */bin/topgrade ]] || return 1
+    revision="${relative%/bin/topgrade}"
+    [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || return 1
+    [[ ! -L "$RELEASES/$revision" &&
+       ! -L "$RELEASES/$revision/bin" &&
+       ! -L "$RELEASES/$revision/bin/topgrade" ]]
+}
+
+snapshot_previous_target() {
+    if [[ -L "$PREVIOUS" || ( -e "$PREVIOUS" && ! -f "$PREVIOUS" ) ]]; then
+        die "unexpected rollback record at $PREVIOUS"
+    fi
+    if [[ -f "$PREVIOUS" ]]; then
+        PREVIOUS_SNAPSHOT="$(mktemp "$BASE/.previous-target.snapshot.XXXXXXXX")" ||
+            die "cannot snapshot rollback record"
+        cp -p "$PREVIOUS" "$PREVIOUS_SNAPSHOT" ||
+            die "cannot snapshot rollback record"
+        PREVIOUS_ORIGINAL_PRESENT=1
+    else
+        PREVIOUS_ORIGINAL_PRESENT=0
+    fi
+}
+
+read_active_target() {
+    ACTIVE_TARGET=""
+    if [[ -L "$LINK" ]]; then
+        ACTIVE_TARGET="$(readlink "$LINK")" || die "cannot read Topgrade launcher link"
+        is_managed_target "$ACTIVE_TARGET" || die "refusing to replace unmanaged $LINK -> $ACTIVE_TARGET"
+    elif [[ -e "$LINK" ]]; then
+        die "refusing to replace existing non-symlink $LINK"
+    fi
+}
+
+write_previous_target() {
+    local target="$1"
+    local tmp
+    if [[ -L "$PREVIOUS" || ( -e "$PREVIOUS" && ! -f "$PREVIOUS" ) ]]; then
+        die "unexpected rollback record at $PREVIOUS"
+    fi
+    tmp="$(mktemp "$BASE/.previous-target.XXXXXXXX")"
+    printf '%s\n' "$target" > "$tmp"
+    mv -f "$tmp" "$PREVIOUS"
+}
+
+atomic_switch() {
+    local target="$1"
+    local tmpdir
+    tmpdir="$(mktemp -d "$HOME_BIN/.topgrade-headsync.XXXXXXXX")"
+    if ! ln -s "$target" "$tmpdir/topgrade"; then
+        rmdir "$tmpdir" || true
+        return 1
+    fi
+    if ! mv -f "$tmpdir/topgrade" "$LINK"; then
+        rm -r "$tmpdir" || true
+        return 1
+    fi
+    rmdir "$tmpdir"
+}
+
+rollback() {
+    local target
+    [[ -L "$LINK" ]] || die "no managed Topgrade launcher exists; Homebrew Topgrade remains available"
+    read_active_target
+    [[ ! -L "$PREVIOUS" ]] || die "unexpected symlink at $PREVIOUS"
+
+    if [[ -f "$PREVIOUS" ]]; then
+        IFS= read -r target < "$PREVIOUS" || die "cannot read rollback target"
+        is_managed_target "$target" || die "invalid rollback target in $PREVIOUS"
+        [[ -x "$target" ]] || die "rollback Topgrade release is missing: $target"
+        [[ "$target" != "$ACTIVE_TARGET" ]] || die "previous Topgrade release is already active"
+        "$target" --version >/dev/null && "$target" --help >/dev/null ||
+            die "rollback Topgrade release failed validation: $target"
+        if [[ -x "$ACTIVE_TARGET" ]] &&
+           "$ACTIVE_TARGET" --version >/dev/null && "$ACTIVE_TARGET" --help >/dev/null; then
+            snapshot_previous_target
+            write_previous_target "$ACTIVE_TARGET"
+            PREVIOUS_CHANGED=1
+        fi
+        atomic_switch "$target" || die "could not switch to previous Topgrade release"
+        "$LINK" --version
+        PREVIOUS_CHANGED=0
+        printf 'Rolled back Topgrade to %s\n' "$target"
+    else
+        rm "$LINK" || die "could not remove managed Topgrade launcher"
+        printf 'Removed managed launcher; Homebrew Topgrade remains at /opt/homebrew/bin/topgrade\n'
+    fi
+}
+
+if (( $# > 1 )); then
+    printf 'Usage: %s [update|--dry-run|rollback]\n' "$0" >&2
+    exit 2
+fi
+
+case "$MODE" in
+    update|--dry-run|rollback) ;;
+    *) printf 'Usage: %s [update|--dry-run|rollback]\n' "$0" >&2; exit 2 ;;
+esac
+
+[[ "$BASE" == /* ]] || die "XDG_DATA_HOME must be an absolute path"
+[[ ! -L "$BASE" ]] || die "refusing symlinked release directory: $BASE"
+[[ ! -L "$RELEASES" ]] || die "refusing symlinked release directory: $RELEASES"
+if [[ "$MODE" == rollback ]]; then
+    [[ -d "$BASE" ]] || die "no managed Topgrade release directory exists"
+elif [[ "$MODE" == update ]]; then
+    mkdir -p "$RELEASES" "$HOME_BIN"
+fi
+
+if [[ "$MODE" != --dry-run ]]; then
+    [[ ! -L "$BASE/lock" && ( ! -e "$BASE/lock" || -f "$BASE/lock" ) ]] ||
+        die "unexpected Topgrade lock file at $BASE/lock"
+    exec 9>>"$BASE/lock" || die "cannot open Topgrade lock file"
+    /usr/bin/lockf -s -t 0 9 || die "cannot acquire Topgrade lock; another update or rollback may be running"
+fi
+
+if [[ "$MODE" == rollback ]]; then
+    read_active_target
+    rollback
+    exit 0
+fi
+
+[[ -n "$GIT" ]] || die "git is unavailable"
+read_active_target
+
+printf 'Topgrade source: %s (main)\n' "$REPO"
+TARGET_SHA="$("$GIT" ls-remote --exit-code "$REPO" refs/heads/main | awk 'NR == 1 { print $1 }')" || die "could not resolve Topgrade main"
+[[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || die "invalid Topgrade main revision: $TARGET_SHA"
+
+RELEASE="$RELEASES/$TARGET_SHA"
+TARGET="$RELEASE/bin/topgrade"
+is_managed_target "$TARGET" || die "refusing unmanaged cached Topgrade release: $TARGET"
+
+if [[ "$MODE" == --dry-run ]]; then
+    if [[ "$ACTIVE_TARGET" == "$TARGET" && -x "$TARGET" ]]; then
+        "$TARGET" --version
+        printf 'DRY RUN: Rustup Topgrade is already on main at %s\n' "$TARGET_SHA"
+    elif [[ -x "$TARGET" ]]; then
+        "$TARGET" --version
+        printf 'DRY RUN: would activate verified release %s\n' "$TARGET_SHA"
+    elif [[ -e "$RELEASE" ]]; then
+        die "release directory exists without an executable: $RELEASE"
+    else
+        printf 'DRY RUN: would build Topgrade main at %s using Rustup Nightly\n' "$TARGET_SHA"
+    fi
+    exit 0
+fi
+
+if [[ "$ACTIVE_TARGET" == "$TARGET" && -x "$TARGET" ]]; then
+    "$TARGET" --version
+    printf 'Rustup Topgrade already matches main at %s\n' "$TARGET_SHA"
+    exit 0
+fi
+
+if [[ -x "$TARGET" ]]; then
+    CANDIDATE="$TARGET"
+elif [[ -e "$RELEASE" ]]; then
+    die "release directory exists without an executable: $RELEASE"
+else
+    [[ -x "$CARGO" ]] || die "Rustup cargo is unavailable at $CARGO"
+    [[ -x "$RUSTUP" ]] || die "rustup is unavailable at $RUSTUP"
+    "$RUSTUP" run nightly rustc --version || die "Rustup Nightly is unavailable"
+
+    STAGE="$(mktemp -d "$BASE/.stage.XXXXXXXX")"
+    PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=nightly \
+        "$CARGO" install --git "$REPO" --rev "$TARGET_SHA" --locked --root "$STAGE" topgrade
+    CANDIDATE="$STAGE/bin/topgrade"
+    [[ -x "$CANDIDATE" ]] || die "cargo install succeeded without producing $CANDIDATE"
+    "$CANDIDATE" --version
+    "$CANDIDATE" --help >/dev/null
+
+    mv "$STAGE" "$RELEASE"
+    STAGE=""
+    CANDIDATE="$TARGET"
+fi
+
+[[ -x "$CANDIDATE" ]] || die "verified Topgrade executable is missing: $CANDIDATE"
+"$CANDIDATE" --version
+"$CANDIDATE" --help >/dev/null
+
+if [[ -n "$ACTIVE_TARGET" && "$ACTIVE_TARGET" != "$CANDIDATE" ]]; then
+    snapshot_previous_target
+    write_previous_target "$ACTIVE_TARGET"
+    PREVIOUS_CHANGED=1
+fi
+
+atomic_switch "$CANDIDATE" || die "could not atomically switch $LINK"
+if ! "$LINK" --version; then
+    if [[ -n "$ACTIVE_TARGET" && -x "$ACTIVE_TARGET" ]]; then
+        atomic_switch "$ACTIVE_TARGET" || die "new launcher failed and prior Topgrade could not be restored"
+    else
+        rm "$LINK" || die "new launcher failed and managed link could not be removed"
+    fi
+    die "new launcher verification failed; previous Topgrade path was restored"
+fi
+PREVIOUS_CHANGED=0
+printf 'Rustup Nightly Topgrade now tracks main at %s\n' "$TARGET_SHA"

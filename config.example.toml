@@ -203,6 +203,12 @@
 # fetch_head = true
 
 
+[helm]
+# Optional executable for verified repository updates; executed directly, without a shell.
+# Leading ~ is expanded. Leave unset to use the native `helm repo update` command.
+# repository_updater = "~/.local/bin/topgrade-helm-verified"
+
+
 [linux]
 # Arch Package Manager to use.
 # Allowed values:

@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   check_locale:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

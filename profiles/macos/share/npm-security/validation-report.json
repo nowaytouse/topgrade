@@ -1,0 +1,105 @@
+{
+  "checks": [
+    {
+      "name": "npm-version",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/candidate/bin/npm-cli.js",
+        "--version"
+      ]
+    },
+    {
+      "name": "npm-ls-production",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/candidate/bin/npm-cli.js",
+        "ls",
+        "--all",
+        "--json",
+        "--global=true",
+        "--prefix",
+        "<validation-workspace>/global-prefix"
+      ]
+    },
+    {
+      "name": "leaf-api-smoke",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/smoke.cjs"
+      ]
+    },
+    {
+      "name": "local-pack",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/candidate/bin/npm-cli.js",
+        "pack",
+        "<validation-workspace>/local-package",
+        "--ignore-scripts",
+        "--offline",
+        "--json",
+        "--pack-destination",
+        "<validation-workspace>"
+      ]
+    },
+    {
+      "name": "local-install",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/candidate/bin/npm-cli.js",
+        "install",
+        "<validation-workspace>/private-npm-leaf-smoke-1.0.0.tgz",
+        "--global=false",
+        "--prefix",
+        "<validation-workspace>/local-consumer",
+        "--offline",
+        "--ignore-scripts",
+        "--package-lock=false",
+        "--save=false",
+        "--no-audit",
+        "--no-fund"
+      ]
+    },
+    {
+      "name": "local-require",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "-e",
+        "const assert=require('node:assert/strict'); assert.equal(require('./node_modules/private-npm-leaf-smoke').answer,42); console.log('Local package installed by candidate npm: PASS')"
+      ]
+    },
+    {
+      "name": "native-build",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "<validation-workspace>/candidate/node_modules/node-gyp/bin/node-gyp.js",
+        "rebuild",
+        "--python=/opt/homebrew/bin/python3.14",
+        "--nodedir=/opt/homebrew/opt/node"
+      ]
+    },
+    {
+      "name": "native-require",
+      "exitCode": 0,
+      "command": [
+        "/opt/homebrew/bin/node",
+        "-e",
+        "const assert=require('node:assert/strict'); assert.equal(require('./build/Release/probe.node').answer(),42); console.log('Native addon built by bundled node-gyp: PASS')"
+      ]
+    }
+  ],
+  "allChecksPassed": true,
+  "officialRegistryAdvisories": {},
+  "candidateDependencyNames": 143,
+  "candidateNameVersionPairs": 145,
+  "candidateUnchangedAfterTests": true,
+  "livePromoted": false,
+  "limits": "No complete upstream npm suite or attack reproduction; official patch packages and normal runtime behavior checked. Future npm reinstall may replace local patch leaves."
+}

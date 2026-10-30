@@ -27,7 +27,7 @@ use crate::HOME_DIR;
 use crate::XDG_DIRS;
 use crate::command::{CommandExt, Utf8Output};
 use crate::config::SkillsPackageManager;
-use crate::execution_context::ExecutionContext;
+use crate::execution_context::{ExecutionContext, RunType};
 use crate::executor::{ExecutorChild, ExecutorOutput};
 use crate::output_changed_message;
 use crate::step::Step;
@@ -37,7 +37,7 @@ use crate::utils::{
     PathExt, check_is_python_2_or_shim, is_installed_via_homebrew, require, require_one, require_option, which,
 };
 use crate::{
-    error::{DryRun, SkipStep, StepFailed, TopgradeError},
+    error::{DryRun, SkipStep, StepFailed},
     terminal::print_warning,
 };
 
@@ -1856,24 +1856,132 @@ pub fn update_julia_packages(ctx: &ExecutionContext) -> Result<()> {
 
 pub fn run_helm_repo_update(ctx: &ExecutionContext) -> Result<()> {
     let helm = require("helm")?;
-
     print_separator("Helm");
+    update_helm_repositories(ctx.run_type(), &helm, ctx.config().helm_repository_updater())
+}
 
-    let no_repo = "no repositories found";
-    let mut success = true;
-    let mut exec = ctx.execute(helm);
-    if let Err(e) = exec.arg("repo").arg("update").status_checked() {
-        error!("Updating repositories failed: {e}");
-        success = match exec.output_checked_utf8() {
-            Ok(s) => s.stdout.contains(no_repo) || s.stderr.contains(no_repo),
-            Err(e) => match e.downcast_ref::<TopgradeError>() {
-                Some(TopgradeError::ProcessFailedWithOutput(_, _, stderr)) => stderr.contains(no_repo),
-                _ => false,
-            },
-        };
+fn update_helm_repositories(run_type: RunType, helm: &Path, updater: Option<&Path>) -> Result<()> {
+    if let Some(updater) = updater {
+        let updater = updater
+            .to_str()
+            .ok_or_else(|| eyre!("Helm repository updater path must be valid UTF-8"))?;
+        return run_type
+            .execute(shellexpand::tilde(updater).into_owned())
+            .status_checked();
     }
 
-    if success { Ok(()) } else { Err(eyre!(StepFailed)) }
+    let output = run_type
+        .execute(helm)
+        .args(["repo", "update"])
+        .output_checked_with_utf8(|output| {
+            if output.status.success()
+                || output.stdout.contains("no repositories found")
+                || output.stderr.contains("no repositories found")
+            {
+                Ok(())
+            } else {
+                Err(())
+            }
+        })?;
+    print!("{}", output.stdout);
+    eprint!("{}", output.stderr);
+    Ok(())
+}
+
+#[cfg(all(test, unix))]
+mod helm_tests {
+    use super::update_helm_repositories;
+    use crate::error::{DryRun, TopgradeError};
+    use crate::execution_context::RunType;
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::{Path, PathBuf};
+    use tempfile::{TempDir, tempdir};
+
+    fn fake_helm(body: &str) -> (TempDir, PathBuf, PathBuf) {
+        let dir = tempdir().unwrap();
+        let helm = dir.path().join("helm updater;literal");
+        let calls = dir.path().join("calls");
+        fs::write(
+            &helm,
+            format!("#!/bin/sh\nprintf x >> \"$(dirname \"$0\")/calls\"\n{body}\n"),
+        )
+        .unwrap();
+        fs::set_permissions(&helm, fs::Permissions::from_mode(0o755)).unwrap();
+        (dir, helm, calls)
+    }
+
+    fn call_count(path: &Path) -> usize {
+        if path.try_exists().unwrap() {
+            fs::read(path).unwrap().len()
+        } else {
+            0
+        }
+    }
+
+    #[test]
+    fn native_success_executes_once_with_repository_arguments() {
+        let (_dir, helm, calls) = fake_helm(
+            r#"test "$#" = 2 && test "$1" = repo && test "$2" = update || exit 99
+printf 'repositories updated\n'"#,
+        );
+        update_helm_repositories(RunType::Wet, &helm, None).unwrap();
+        assert_eq!(call_count(&calls), 1);
+    }
+
+    #[test]
+    fn native_failure_executes_once_and_preserves_diagnostics() {
+        let (_dir, helm, calls) = fake_helm("echo 'unexpected EOF' >&2\nexit 23");
+        let error = update_helm_repositories(RunType::Wet, &helm, None).unwrap_err();
+        assert_eq!(call_count(&calls), 1);
+        assert!(format!("{error:?}").contains("unexpected EOF"));
+        match error.downcast_ref::<TopgradeError>().unwrap() {
+            TopgradeError::ProcessFailedWithOutput(_, status, stderr) => {
+                assert_eq!(status.code(), Some(23));
+                assert!(stderr.contains("unexpected EOF"));
+            }
+            other => panic!("Unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn no_repositories_is_a_single_noop() {
+        for body in [
+            "echo 'Error: no repositories found. You must add one before updating' >&2\nexit 1",
+            "echo 'no repositories found'\nexit 1",
+        ] {
+            let (_dir, helm, calls) = fake_helm(body);
+            update_helm_repositories(RunType::Wet, &helm, None).unwrap();
+            assert_eq!(call_count(&calls), 1);
+        }
+    }
+
+    #[test]
+    fn native_dry_run_does_not_execute() {
+        let (_dir, helm, calls) = fake_helm("exit 23");
+        let error = update_helm_repositories(RunType::Dry, &helm, None).unwrap_err();
+        assert!(error.downcast_ref::<DryRun>().is_some());
+        assert_eq!(call_count(&calls), 0);
+    }
+
+    #[test]
+    fn configured_updater_is_a_literal_executable_without_shell_or_native_fallback() {
+        let (_native_dir, helm, native_calls) = fake_helm("exit 99");
+        for code in [0, 23] {
+            let (_dir, updater, calls) = fake_helm(&format!("test \"$#\" = 0 || exit 99\nexit {code}"));
+            let result = update_helm_repositories(RunType::Wet, &helm, Some(&updater));
+            assert_eq!(result.is_ok(), code == 0);
+            assert_eq!(call_count(&calls), 1);
+            assert_eq!(call_count(&native_calls), 0);
+        }
+    }
+
+    #[test]
+    fn configured_updater_dry_run_does_not_execute() {
+        let (_dir, updater, calls) = fake_helm("exit 23");
+        update_helm_repositories(RunType::Dry, Path::new("helm"), Some(&updater)).unwrap();
+        assert_eq!(call_count(&calls), 0);
+    }
 }
 
 pub fn run_stew(ctx: &ExecutionContext) -> Result<()> {

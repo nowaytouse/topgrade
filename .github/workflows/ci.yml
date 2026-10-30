@@ -25,6 +25,7 @@ defaults:
 
 jobs:
   format:
+    if: github.repository == 'topgrade-rs/topgrade'
     name: Format (cargo fmt)
     runs-on: ubuntu-latest
     steps:
@@ -38,6 +39,7 @@ jobs:
         run: cargo fmt --all -- --check
 
   custom-checks:
+    if: github.repository == 'topgrade-rs/topgrade'
     name: Custom checks
     runs-on: ubuntu-latest
     steps:
@@ -99,6 +101,7 @@ jobs:
           fi
 
   msrv:
+    if: github.repository == 'topgrade-rs/topgrade'
     needs: [ format, custom-checks ]
     name: MSRV check (${{ matrix.target_name }})
     runs-on: ${{ matrix.os }}
@@ -144,6 +147,7 @@ jobs:
         run: cargo check --locked --all-features
 
   main:
+    if: github.repository == 'topgrade-rs/topgrade'
     needs: [ format, custom-checks ]
     name: ${{ matrix.target_name }}
     runs-on: ${{ matrix.os }}

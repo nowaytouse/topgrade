@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   TestConfig:
+    if: github.repository == 'topgrade-rs/topgrade'
     runs-on: ubuntu-latest
 
     steps:

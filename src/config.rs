@@ -227,6 +227,12 @@ pub struct Brew {
 
 #[derive(Deserialize, Default, Debug, Merge)]
 #[serde(deny_unknown_fields)]
+pub struct Helm {
+    repository_updater: Option<PathBuf>,
+}
+
+#[derive(Deserialize, Default, Debug, Merge)]
+#[serde(deny_unknown_fields)]
 pub struct Go {
     #[merge(strategy = crate::utils::merge_strategies::vec_prepend_opt)]
     gup_exclude: Option<Vec<String>>,
@@ -567,6 +573,9 @@ pub struct ConfigFile {
 
     #[merge(strategy = merge2::option::recursive)]
     brew: Option<Brew>,
+
+    #[merge(strategy = merge2::option::recursive)]
+    helm: Option<Helm>,
 
     #[merge(strategy = merge2::option::recursive)]
     linux: Option<Linux>,
@@ -1085,6 +1094,14 @@ impl Config {
     /// Launch an editor to edit the configuration
     pub fn edit() -> Result<()> {
         ConfigFile::edit()
+    }
+
+    /// Optional executable that owns verified Helm repository updates.
+    pub fn helm_repository_updater(&self) -> Option<&Path> {
+        self.config_file
+            .helm
+            .as_ref()
+            .and_then(|helm| helm.repository_updater.as_deref())
     }
 
     /// The list of commands to run before performing any step.
@@ -2366,6 +2383,28 @@ mod test {
         }
 
         assert_eq!(config_from_toml("").skills_package_manager(), SkillsPackageManager::Npm);
+    }
+
+    #[test]
+    fn helm_repository_updater_is_optional_and_a_literal_path() {
+        assert!(config_from_toml("").helm_repository_updater().is_none());
+        let config = config_from_toml("[helm]\nrepository_updater = \"~/.local/bin/helm updater;literal\"\n");
+        assert_eq!(
+            config.helm_repository_updater(),
+            Some(Path::new("~/.local/bin/helm updater;literal"))
+        );
+    }
+
+    #[test]
+    fn helm_repository_updater_preserves_config_precedence() {
+        let mut left = Helm {
+            repository_updater: Some(PathBuf::from("left")),
+        };
+        let mut right = Helm {
+            repository_updater: Some(PathBuf::from("right")),
+        };
+        left.merge(&mut right);
+        assert_eq!(left.repository_updater, Some(PathBuf::from("left")));
     }
 
     /// Test the default configuration in `config.example.toml` is valid.
