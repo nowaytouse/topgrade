@@ -2,7 +2,7 @@
 
 This optional Apple Silicon macOS profile versions the existing journal-protected updater scripts and their declared configuration. It does not replace Homebrew's Rust with PATH tricks, remove historical kegs, disable errors, or claim that a fork can make unavailable vendor services succeed.
 
-The 25 scripts, five TOML files and two npm security patch packages are covered by `manifest.json`. The original transaction/recovery implementations remain intact. The fork updater tracks this fork's main branch, and the built-in Helm step uses the typed `[helm].repository_updater` path to avoid an extra shell owner. The fork is the sole active Topgrade installation; the former Homebrew Topgrade was backed up and uninstalled on this Mac. Binary rollback uses retained managed fork releases, independently of Homebrew. LLVM 23.1.4 remains pinned; historical LLVM HEAD is retained.
+The 26 scripts, five TOML files and two npm security patch packages are covered by `manifest.json`. The original transaction/recovery implementations remain intact. The fork updater tracks this fork's main branch, and the built-in Helm step uses the typed `[helm].repository_updater` path to avoid an extra shell owner. The fork is the sole active Topgrade installation; the former Homebrew Topgrade was backed up and uninstalled on this Mac. Binary rollback uses retained managed fork releases, independently of Homebrew. LLVM 23.1.4 remains pinned; historical LLVM HEAD is retained.
 
 ## Review and install
 
@@ -36,7 +36,7 @@ Installing this profile does not build or switch the Topgrade binary itself. The
 
 ## Python 3.15 runtime
 
-The owned profile contains 17 operational Python entrypoints, the installer and seven test files. They use only the Python standard library, so the profile has no pip runtime dependencies or additional dependency lockfile. The separate root Python package uses maturin only to build the Rust binary.
+The owned profile contains 18 operational Python entrypoints, the installer and eight test files. They use only the Python standard library, so the profile has no pip runtime dependencies or additional dependency lockfile. The separate root Python package uses maturin only to build the Rust binary.
 
 Versioned `python3.15` launchers select the runtime explicitly; the SQLite integration retains its explicit Homebrew Python 3.15 ABI target. The four embedded HEAD-sync Python blocks and the Gradle/Preview shell forwarders also select `python3.15`. Owned Zig, Gradle and Docker helper children inherit `sys.executable`. The installer rejects Python versions below 3.15 before accessing deployment targets or creating state. This changes the fork's profile requirements, not the user's global PATH or unrelated tool environments.
 
@@ -61,6 +61,14 @@ Skills remain updated by their existing owners and independent coverage checks. 
 Keep `origin` pointing to this fork and `upstream` to `topgrade-rs/topgrade`. Start from a reviewed clean tree, fetch upstream and merge `upstream/main` into the fork; stop and resolve conflicts without reset or force-push. Run Rust fmt/Clippy/tests and the profile tests, then push the reviewed fork branch. Build the new binary with the fork self-updater and explicitly apply/verify the matching companion profile. There is no unattended overwrite of locally edited configuration.
 
 Helm remains an enabled built-in step. The optional updater downloads the entire public Bitnami index through official HTTPS with compression and compares its complete bytes to the regular local index. Only an identical body that also passes native Helm index parsing is reported current, without writing Helm's cache. Special files are opened without blocking and rejected. Changed/absent indexes and other repositories use native Helm, and native failure remains nonzero. TLS verification, official redirect-host checks, bounded downloads, local configuration drift checks and rejected cache symlinks remain active. This addresses the unchanged large-index transfer case; it does not promise that future changed-index transfers will succeed.
+
+## GitHub CLI Skills ownership
+
+The enabled GitHub CLI Skills step uses `[github_cli].skills_updater` to call the versioned `topgrade-gh-skills-verified` helper. It validates installed metadata and registered ownership before updating anything. GitHub-managed real directories are grouped by their parent and selected by directory basename with native `gh skill update --dir ... --all ...`; JSON display aliases are not update arguments.
+
+Skills without GitHub metadata stay with their verified existing owners. NPX records must match the canonical shared installation; additional host copies must match its complete file tree. Cursor mirrors must match the existing fixed native-skill allowlist and vendor contents. Unknown owners, invalid metadata, changed copies or pinned entries stop this step instead of being reported current. This does not claim that NPX or Cursor updated anything: their existing independent updater and coverage checks still run.
+
+Before updates, the helper follows native GH's unpinned reference policy: the latest published release, or the repository default branch when no release exists. Other release lookup failures remain errors. The complete tree for that reference must contain each declared skill directory and SKILL.md; truncated or invalid responses fail closed. After native updates, metadata must match the verified directory tree SHA and original source/path. A nonzero exit, native warning or unknown completion output remains a failure, including warnings followed by “All skills are up to date.”. Native GH writes its own installation records to the shared lock. The helper validates the lock schema before updates, rejects publisher/path/pin collisions and checks that native writes preserve unrelated entries and dismissed choices. Dry runs require the complete lock bytes to stay unchanged. The helper never injects metadata into foreign skills, independently rewrites the shared lock, unpins skills or uses force. Other installations keep the upstream native behavior unless this optional hook is configured.
 
 ## Per-repository dependency compatibility
 

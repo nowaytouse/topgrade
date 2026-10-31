@@ -1,0 +1,382 @@
+#!/usr/bin/env python3.15
+"""Update verified GH-owned skills; leave registered NPX/Cursor owners in place."""
+from __future__ import annotations
+import argparse
+from collections import defaultdict
+import importlib.util
+import json
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import subprocess
+import sys
+from urllib.parse import quote
+
+HEX = re.compile(r"[0-9a-f]{40}\Z")
+NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*\Z")
+ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+def sibling(name):
+    path = Path(__file__).with_name(name + ".py")
+    spec = importlib.util.spec_from_file_location(name.replace("-", "_"), path)
+    if not spec or not spec.loader:
+        raise RuntimeError(f"Required ownership verifier unavailable: {name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+def regular(path, directory=False):
+    if path.is_symlink() or path != path.resolve() or not (path.is_dir() if directory else path.is_file()):
+        raise RuntimeError(f"Expected a regular non-symlink {'directory' if directory else 'file'}: {path}")
+
+def repo_name(value):
+    match = re.fullmatch(r"https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/?", value or "")
+    if not match:
+        raise RuntimeError("Skill source must be a canonical GitHub repository URL")
+    return match[1] + "/" + match[2].removesuffix(".git")
+
+def tree_path(value):
+    if value in ("", "."):
+        return ""
+    path = PurePosixPath(value)
+    if path.is_absolute() or "\\" in value or ".." in path.parts or path.as_posix() != value:
+        raise RuntimeError("Unsafe or ambiguous skill source directory")
+    return value
+
+def metadata(path, normalizer):
+    regular(path, True)
+    regular(path / "SKILL.md")
+    try:
+        value = normalizer.frontmatter(path / "SKILL.md")
+    except (OSError, ValueError) as error:
+        raise RuntimeError(f"Incomplete GitHub skill metadata: {path}") from error
+    if value["name"] != path.name or not HEX.fullmatch(value["github-tree-sha"]):
+        raise RuntimeError(f"Invalid GitHub skill identity/hash: {path}")
+    repo_name(value["github-repo"])
+    tree_path(value["github-path"])
+    return value
+
+def lock_snapshot(home):
+    path = home / ".agents/.skill-lock.json"
+    if not path.exists() and not path.is_symlink():
+        return None, None
+    regular(path)
+    raw = path.read_bytes()
+    try:
+        value = json.loads(raw)
+    except ValueError as error:
+        raise RuntimeError("Invalid shared skill-lock JSON; no GH updates permitted") from error
+    required = {"source", "sourceType", "sourceUrl", "skillFolderHash", "installedAt", "updatedAt"}
+    if (not isinstance(value, dict) or set(value) - {"version", "skills", "dismissed"} or
+            type(value.get("version")) is not int or value["version"] != 3 or
+            not isinstance(value.get("skills"), dict) or not isinstance(value.get("dismissed", {}), dict) or
+            any(type(v) is not bool for v in value.get("dismissed", {}).values())):
+        raise RuntimeError("Shared skill-lock schema cannot safely round-trip through native GH")
+    for entry in value["skills"].values():
+        if (not isinstance(entry, dict) or not required <= set(entry) or
+                set(entry) - required - {"skillPath", "pinnedRef"} or
+                any(not isinstance(v, str) for v in entry.values()) or
+                any(not entry[key] for key in ("skillPath", "pinnedRef") if key in entry)):
+            raise RuntimeError("Shared skill-lock entry cannot safely round-trip through native GH")
+    return value, raw
+
+def native_keys(item):
+    return {item["alias"], item["path"].name}
+
+def lock_identity(entry, item):
+    directory = tree_path(item["meta"]["github-path"])
+    expected_path = directory + "/SKILL.md" if directory else "SKILL.md"
+    try:
+        return (entry.get("sourceType") == "github" and entry.get("source", "").lower() == item["repo"] and
+                repo_name(entry.get("sourceUrl", "")).lower() == item["repo"] and
+                entry.get("skillPath") == expected_path and not entry.get("pinnedRef"))
+    except RuntimeError:
+        return False
+
+def lock_collisions(snapshot, selected):
+    records = snapshot[0]["skills"] if snapshot[0] else {}
+    proposed = {}
+    for item in selected:
+        if item["meta"]["github-tree-sha"] == item["expected"]:
+            continue
+        identity = item["repo"], tree_path(item["meta"]["github-path"])
+        for key in native_keys(item):
+            if (key in records and not lock_identity(records[key], item)) or (
+                    key in proposed and proposed[key] != identity):
+                raise RuntimeError(f"Planned GH update conflicts with a shared lock publisher/path/pin: {key}")
+            proposed[key] = identity
+
+def verify_lock(before, after, group, dry_run, successful=True):
+    if dry_run:
+        if after != before:
+            raise RuntimeError("Dry-run changed the shared skill lock")
+        return
+    if before[0] is not None and after[0] is None:
+        raise RuntimeError("Native GH removed the shared skill lock")
+    old = before[0] or {"version": 3, "skills": {}}
+    new = after[0] or {"version": 3, "skills": {}}
+    if old["version"] != new["version"] or old.get("dismissed", {}) != new.get("dismissed", {}):
+        raise RuntimeError("Native GH changed shared lock version/dismissed choices")
+    allowed = {key: [item for item in group if key in native_keys(item)]
+               for item in group for key in native_keys(item)}
+    for key in old["skills"].keys() | new["skills"].keys():
+        previous, current = old["skills"].get(key), new["skills"].get(key)
+        if previous == current:
+            continue
+        if key not in allowed or current is None or not any(
+                lock_identity(current, item) and current["skillFolderHash"] == item["expected"] and
+                (previous is None or lock_identity(previous, item)) for item in allowed[key]):
+            raise RuntimeError(f"Native GH clobbered an unrelated or mismatched shared lock entry: {key}")
+    if not successful:
+        return
+    for item in group:
+        if item["meta"]["github-tree-sha"] != item["expected"] and not any(
+                (record := new["skills"].get(key)) is not None and lock_identity(record, item) and
+                record["skillFolderHash"] == item["expected"] for key in native_keys(item)):
+            raise RuntimeError(f"Native GH did not record its planned update in the shared lock: {item['path'].name}")
+
+def npx_registered(name, lock):
+    entry = lock.get(name)
+    if not isinstance(entry, dict) or entry.get("sourceType") != "github":
+        return False
+    source = entry.get("source")
+    url = entry.get("sourceUrl")
+    path = entry.get("skillPath")
+    if not isinstance(source, str) or not isinstance(url, str) or not isinstance(path, str):
+        return False
+    try:
+        return (repo_name(url).lower() == source.lower() and
+                bool(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", source)) and
+                path.endswith("/SKILL.md") and tree_path(path) == path and
+                isinstance(entry.get("skillFolderHash"), str) and bool(HEX.fullmatch(entry["skillFolderHash"])))
+    except RuntimeError:
+        return False
+
+def preflight(rows, home, cursor, normalizer, lock):
+    if not isinstance(rows, list) or not rows:
+        raise RuntimeError("GH skill discovery returned no verifiable installed entries")
+    selected, seen, delegated = [], set(), {"npx": 0, "cursor": 0}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("path"), str):
+            raise RuntimeError("Unsupported GH skill discovery schema")
+        path = Path(row["path"])
+        name = path.name
+        if (not path.is_absolute() or not NAME.fullmatch(name) or path in seen or
+                row.get("pinned") is not False or row.get("scope") not in ("user", "project") or
+                not isinstance(row.get("skillName"), str) or not isinstance(row.get("sourceURL"), str)):
+            raise RuntimeError(f"Ambiguous, pinned or unsupported skill entry: {path}")
+        seen.add(path)
+        regular(path, True)
+        regular(path / "SKILL.md")
+        source = row["sourceURL"]
+        if source:
+            meta = metadata(path, normalizer)
+            if repo_name(meta["github-repo"]).lower() != repo_name(source).lower():
+                raise RuntimeError(f"GH source and installed metadata disagree: {path}")
+            selected.append({"path": path, "meta": meta, "repo": repo_name(source).lower(),
+                             "alias": row["skillName"]})
+            continue
+        canonical = home / ".agents/skills" / name
+        registered = npx_registered(name, lock)
+        if path == canonical and registered and cursor.name_matches(path, name):
+            delegated["npx"] += 1
+        elif (name == "lean-ctx" and registered and path in {
+                home / ".cursor/skills/lean-ctx", home / ".copilot/skills/lean-ctx",
+                home / ".config/opencode/skills/lean-ctx"}):
+            regular(canonical, True)
+            regular(canonical / "SKILL.md")
+            if not cursor.name_matches(canonical, name) or cursor.safe_tree(path) != cursor.safe_tree(canonical):
+                raise RuntimeError(f"Registered lean-ctx copy differs from its canonical owner: {path}")
+            delegated["npx"] += 1
+        elif path == canonical and name in cursor.NAMES_SET:
+            native = home / ".cursor/skills-cursor" / name
+            if not cursor.equivalent(native, path) or not cursor.name_matches(native, name):
+                raise RuntimeError(f"Cursor native skill mirror is not verified: {path}")
+            delegated["cursor"] += 1
+        else:
+            raise RuntimeError(f"No verified updater owns this metadata-less skill: {path}")
+    return selected, delegated
+
+def call(gh, args, run, context):
+    try:
+        result = run([gh, *args], capture_output=True, text=True, timeout=600, check=False)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError(f"{context}: command could not complete") from error
+    if result.returncode:
+        raise RuntimeError(f"{context}: gh returned exit {result.returncode}")
+    return result
+
+def github_json(gh, repo, route, run, allow_missing=False):
+    context = f"Resolve native GH skill source {repo}"
+    try:
+        result = run([gh, "api", "--hostname", "github.com", "--include", f"repos/{repo}{route}"],
+                     capture_output=True, text=True, timeout=600, check=False)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError(f"{context}: command could not complete") from error
+    headers, separator, body = result.stdout.replace("\r\n", "\n").partition("\n\n")
+    status = re.match(r"HTTP/\S+ (\d{3})(?: |$)", headers)
+    if separator and status and status[1] == "404" and result.returncode and allow_missing:
+        return None
+    if result.returncode or not separator or not status or status[1] != "200":
+        raise RuntimeError(f"{context}: GitHub API request failed")
+    try:
+        value = json.loads(body)
+        if not isinstance(value, dict):
+            raise ValueError("expected an object")
+        return value
+    except ValueError as error:
+        raise RuntimeError(f"{context}: invalid GitHub API response") from error
+
+def native_reference(gh, repo, run):
+    # Match gh 2.103.3 discovery.ResolveRef(..., ""): release, then default branch.
+    release = github_json(gh, repo, "/releases/latest", run, allow_missing=True)
+    tag = release.get("tag_name", "") if release is not None else ""
+    if not isinstance(tag, str):
+        raise RuntimeError(f"Invalid latest-release tag: {repo}")
+    if tag:
+        prefix, ref = "tags", tag
+    else:
+        value = github_json(gh, repo, "", run)
+        prefix, ref = "heads", value.get("default_branch")
+        if not isinstance(ref, str) or not ref:
+            raise RuntimeError(f"Missing default branch: {repo}")
+    value = github_json(gh, repo, f"/git/ref/{prefix}/{quote(ref, safe='')}", run)
+    obj = value.get("object", {})
+    if not isinstance(obj, dict):
+        raise RuntimeError(f"Invalid remote Git reference: {repo}")
+    if (prefix == "tags" and obj.get("type") == "tag" and
+            isinstance(obj.get("sha"), str) and HEX.fullmatch(obj["sha"])):
+        value = github_json(gh, repo, f"/git/tags/{obj['sha']}", run)
+        obj = value.get("object", {})
+    if (not isinstance(obj, dict) or obj.get("type") != "commit" or
+            not isinstance(obj.get("sha"), str) or not HEX.fullmatch(obj["sha"])):
+        raise RuntimeError(f"Invalid remote commit reference: {repo}")
+    return obj["sha"]
+
+def remote_tree(gh, repo, run):
+    sha = native_reference(gh, repo, run)
+    value = github_json(gh, repo, f"/git/trees/{sha}?recursive=1", run)
+    try:
+        if (not isinstance(value, dict) or value.get("truncated") is not False or
+                not HEX.fullmatch(value.get("sha", "")) or not isinstance(value.get("tree"), list)):
+            raise ValueError("invalid/truncated tree")
+        entries = {}
+        for entry in value["tree"]:
+            path = entry["path"]
+            if (not isinstance(path, str) or not path or tree_path(path) != path or path in entries or
+                    entry.get("type") not in ("blob", "tree", "commit") or
+                    not HEX.fullmatch(entry.get("sha", ""))):
+                raise ValueError("invalid tree entry")
+            entries[path] = entry
+        return value["sha"], entries
+    except (KeyError, TypeError, ValueError, RuntimeError) as error:
+        raise RuntimeError(f"Invalid or truncated remote GitHub tree: {repo}") from error
+
+def expected_tree(repo, directory, root_sha, entries):
+    directory = tree_path(directory)
+    skill_path = directory + "/SKILL.md" if directory else "SKILL.md"
+    skill = entries.get(skill_path, {})
+    if skill.get("type") != "blob" or skill.get("mode") not in ("100644", "100755"):
+        raise RuntimeError(f"Remote skill file is missing or not regular: {repo}/{skill_path}")
+    if not directory:
+        return root_sha
+    folder = entries.get(directory, {})
+    if folder.get("type") != "tree":
+        raise RuntimeError(f"Remote skill directory is missing: {repo}/{directory}")
+    return folder["sha"]
+
+def accepted_output(result, group, dry_run):
+    text = ANSI.sub("", result.stdout + "\n" + result.stderr)
+    if re.search(r"!|✗|✘|(?:^|\n)\s*Error:|\bSkipping\b", text, re.I):
+        raise RuntimeError("GH skill updater reported a warning/error despite exit 0")
+    if re.search(r"\bno (?:installed |updatable )?skills\b|none of the specified skills", text, re.I):
+        raise RuntimeError("GH updater did not select the verified installed skills")
+    if any(line.strip() == "All skills are up to date." for line in text.splitlines()):
+        return
+    updated = re.findall(r"(?m)^Updated (.+)$", text)
+    aliases = {name for item in group for name in (item["alias"], item["path"].name)}
+    if updated and all(name.strip() in aliases for name in updated):
+        return
+    if dry_run and re.search(r"(?m)^\s*\d+ update\(s\) available:\s*$", text):
+        return
+    raise RuntimeError("GH updater returned an unrecognized/no-skills success summary")
+
+def update(home, gh, run=subprocess.run, dry_run=False):
+    cursor = sibling("topgrade-cursor-native-reconcile")
+    normalizer = sibling("normalize-gh-skill-lock")
+    listing = call(gh, ["skill", "list", "--json", "skillName,sourceURL,path,pinned,scope"], run,
+                   "Discover installed skill owners")
+    snapshot = lock_snapshot(home)
+    selected, delegated = preflight(json.loads(listing.stdout), home, cursor, normalizer,
+                                    snapshot[0]["skills"] if snapshot[0] else {})
+    trees = {repo: remote_tree(gh, repo, run) for repo in sorted({item["repo"] for item in selected})}
+    remote_errors = []
+    for item in selected:
+        try:
+            item["expected"] = expected_tree(item["repo"], item["meta"]["github-path"], *trees[item["repo"]])
+        except RuntimeError as error:
+            remote_errors.append(str(error))
+    if remote_errors:
+        raise RuntimeError("Remote skill preflight failed before any updates:\n" + "\n".join(remote_errors))
+    lock_collisions(snapshot, selected)
+    planned = sum(item["meta"]["github-tree-sha"] != item["expected"] for item in selected)
+    groups = defaultdict(list)
+    for item in selected:
+        groups[item["path"].parent].append(item)
+    for parent, group in sorted(groups.items()):
+        if lock_snapshot(home) != snapshot:
+            raise RuntimeError("Shared skill lock changed after preflight; no further GH updates permitted")
+        for item in group:
+            if metadata(item["path"], normalizer) != item["meta"]:
+                raise RuntimeError(f"Skill metadata changed after preflight: {item['path']}")
+        args = ["skill", "update", "--dir", str(parent), "--all"]
+        if dry_run:
+            args.append("--dry-run")
+        args.extend(sorted(item["path"].name for item in group))
+        native_error = None
+        try:
+            result = call(gh, args, run, f"Update GH-owned skills in {parent}")
+            accepted_output(result, group, dry_run)
+        except RuntimeError as error:
+            native_error = error
+        try:
+            after_lock = lock_snapshot(home)
+            verify_lock(snapshot, after_lock, group, dry_run, successful=native_error is None)
+        except (OSError, ValueError, RuntimeError) as error:
+            raise RuntimeError(f"Shared lock verification failed: {error}; restore the verified pre-update backup before retrying") from error
+        if native_error is not None:
+            if after_lock != snapshot:
+                raise RuntimeError(f"{native_error}; shared lock changed, restore the verified pre-update backup before retrying") from native_error
+            raise native_error
+        snapshot = after_lock
+        for item in group:
+            after = metadata(item["path"], normalizer)
+            if dry_run:
+                valid = after == item["meta"]
+            else:
+                valid = (all(after[key] == item["meta"][key] for key in ("name", "github-repo", "github-path")) and
+                         after["github-tree-sha"] == item["expected"])
+            if not valid:
+                raise RuntimeError(f"GH skill update verification failed: {item['path']}; restore the verified pre-update backup before retrying")
+    return {"gh": len(selected), "npx_delegated": delegated["npx"], "cursor_delegated": delegated["cursor"],
+            "planned": planned, "current_at_preflight": len(selected)-planned,
+            "status": "PLAN" if dry_run else "VERIFIED"}
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+    try:
+        if sys.version_info[:2] < (3, 15) or not (gh := shutil.which("gh")):
+            raise RuntimeError("Python 3.15 and GitHub CLI are required")
+        import os
+        if os.environ.get("XDG_STATE_HOME"):
+            raise RuntimeError("Non-default shared lock ownership needs review")
+        print(json.dumps(update(Path.home(), gh, dry_run=args.dry_run), indent=2))
+        return 0
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"FAIL: {error}", file=sys.stderr)
+        return 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())

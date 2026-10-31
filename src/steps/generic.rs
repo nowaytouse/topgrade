@@ -1837,7 +1837,20 @@ pub fn run_ghcli_skills_upgrade(ctx: &ExecutionContext) -> Result<()> {
     }
 
     print_separator("GitHub CLI Skills");
-    ctx.execute(&gh).args(["skill", "update", "--all"]).status_checked()
+    update_github_cli_skills(ctx.run_type(), &gh, ctx.config().github_cli_skills_updater())
+}
+
+fn update_github_cli_skills(run_type: RunType, gh: &Path, updater: Option<&Path>) -> Result<()> {
+    if let Some(updater) = updater {
+        let updater = updater
+            .to_str()
+            .ok_or_else(|| eyre!("GitHub CLI skills updater path must be valid UTF-8"))?;
+        return run_type
+            .execute(shellexpand::tilde(updater).into_owned())
+            .status_checked();
+    }
+
+    run_type.execute(gh).args(["skill", "update", "--all"]).status_checked()
 }
 
 pub fn update_julia_packages(ctx: &ExecutionContext) -> Result<()> {
@@ -1891,7 +1904,7 @@ fn update_helm_repositories(run_type: RunType, helm: &Path, updater: Option<&Pat
 
 #[cfg(all(test, unix))]
 mod helm_tests {
-    use super::update_helm_repositories;
+    use super::{update_github_cli_skills, update_helm_repositories};
     use crate::error::{DryRun, TopgradeError};
     use crate::execution_context::RunType;
     use std::fs;
@@ -1918,6 +1931,51 @@ mod helm_tests {
         } else {
             0
         }
+    }
+
+    #[test]
+    fn github_cli_native_skills_update_keeps_all_arguments() {
+        let (_dir, gh, calls) =
+            fake_helm(r#"test "$#" = 3 && test "$1" = skill && test "$2" = update && test "$3" = --all || exit 99"#);
+        update_github_cli_skills(RunType::Wet, &gh, None).unwrap();
+        assert_eq!(call_count(&calls), 1);
+    }
+
+    #[test]
+    fn github_cli_skills_updater_is_literal_and_failure_never_falls_back() {
+        let (_native_dir, gh, native_calls) = fake_helm("exit 99");
+        for code in [0, 23] {
+            let (_dir, updater, calls) = fake_helm(&format!("test \"$#\" = 0 || exit 99\nexit {code}"));
+            let result = update_github_cli_skills(RunType::Wet, &gh, Some(&updater));
+            assert_eq!(result.is_ok(), code == 0);
+            if let Err(error) = result {
+                match error.downcast_ref::<TopgradeError>().unwrap() {
+                    TopgradeError::ProcessFailed(_, status) => assert_eq!(status.code(), Some(code)),
+                    other => panic!("Unexpected error: {other:?}"),
+                }
+            }
+            assert_eq!(call_count(&calls), 1);
+            assert_eq!(call_count(&native_calls), 0);
+        }
+    }
+
+    #[test]
+    fn github_cli_missing_skills_updater_never_falls_back() {
+        let (dir, gh, native_calls) = fake_helm("exit 99");
+        let missing = dir.path().join("missing updater;literal");
+        assert!(update_github_cli_skills(RunType::Wet, &gh, Some(&missing)).is_err());
+        assert_eq!(call_count(&native_calls), 0);
+    }
+
+    #[test]
+    fn github_cli_skills_dry_run_executes_neither_native_nor_updater() {
+        let (_native_dir, gh, native_calls) = fake_helm("exit 99");
+        let (_dir, updater, calls) = fake_helm("exit 23");
+        for path in [None, Some(updater.as_path())] {
+            update_github_cli_skills(RunType::Dry, &gh, path).unwrap();
+        }
+        assert_eq!(call_count(&calls), 0);
+        assert_eq!(call_count(&native_calls), 0);
     }
 
     #[test]

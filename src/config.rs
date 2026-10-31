@@ -227,6 +227,12 @@ pub struct Brew {
 
 #[derive(Deserialize, Default, Debug, Merge)]
 #[serde(deny_unknown_fields)]
+pub struct GithubCli {
+    skills_updater: Option<PathBuf>,
+}
+
+#[derive(Deserialize, Default, Debug, Merge)]
+#[serde(deny_unknown_fields)]
 pub struct Helm {
     repository_updater: Option<PathBuf>,
 }
@@ -573,6 +579,9 @@ pub struct ConfigFile {
 
     #[merge(strategy = merge2::option::recursive)]
     brew: Option<Brew>,
+
+    #[merge(strategy = merge2::option::recursive)]
+    github_cli: Option<GithubCli>,
 
     #[merge(strategy = merge2::option::recursive)]
     helm: Option<Helm>,
@@ -1094,6 +1103,14 @@ impl Config {
     /// Launch an editor to edit the configuration
     pub fn edit() -> Result<()> {
         ConfigFile::edit()
+    }
+
+    /// Optional executable that owns verified GitHub CLI skill updates.
+    pub fn github_cli_skills_updater(&self) -> Option<&Path> {
+        self.config_file
+            .github_cli
+            .as_ref()
+            .and_then(|github_cli| github_cli.skills_updater.as_deref())
     }
 
     /// Optional executable that owns verified Helm repository updates.
@@ -2383,6 +2400,34 @@ mod test {
         }
 
         assert_eq!(config_from_toml("").skills_package_manager(), SkillsPackageManager::Npm);
+    }
+
+    #[test]
+    fn github_cli_skills_updater_is_optional_and_a_literal_path() {
+        assert!(config_from_toml("").github_cli_skills_updater().is_none());
+        let config = config_from_toml("[github_cli]\nskills_updater = \"~/.local/bin/skills updater;literal\"\n");
+        assert_eq!(
+            config.github_cli_skills_updater(),
+            Some(Path::new("~/.local/bin/skills updater;literal"))
+        );
+    }
+
+    #[test]
+    fn github_cli_skills_updater_preserves_recursive_config_precedence() {
+        let mut left: ConfigFile = toml::from_str("[github_cli]\n").unwrap();
+        let mut right: ConfigFile = toml::from_str("[github_cli]\nskills_updater = \"right\"\n").unwrap();
+        left.merge(&mut right);
+        assert_eq!(
+            left.github_cli.as_ref().unwrap().skills_updater.as_deref(),
+            Some(Path::new("right"))
+        );
+
+        let mut preferred: ConfigFile = toml::from_str("[github_cli]\nskills_updater = \"left\"\n").unwrap();
+        preferred.merge(&mut left);
+        assert_eq!(
+            preferred.github_cli.unwrap().skills_updater.as_deref(),
+            Some(Path::new("left"))
+        );
     }
 
     #[test]

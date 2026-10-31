@@ -20,7 +20,7 @@ update-preview-extras update-preview-apps update-project-deps cli-versions
 npm-bundled-security-guard.py topgrade-cursor-native-reconcile.py design-skill-kit-sync.py
 topgrade-skills-verified.py topgrade-skills-integrity.py normalize-gh-skill-lock.py
 topgrade-select-xcode-beta proxy-auto-run update-gradle-nightly update-xcode-beta
-topgrade-helm-verified""".split())
+topgrade-helm-verified topgrade-gh-skills-verified""".split())
 LIBEXEC = frozenset(("rolling-deps/edge-extras.py", "rolling-deps/update-gradle-nightly.real.py",
                      "preview-apps/update-preview-apps.py"))
 CONFIG = frozenset(("topgrade.toml", "topgrade.d/90-brew-headsync.toml",

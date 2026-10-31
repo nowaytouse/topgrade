@@ -51,6 +51,13 @@
       "adoptSha256": "f7751c56f8a689e524d34425068bd478078516458a8f4028bf9d9d4b0b7b433d"
     },
     {
+      "source": "bin/topgrade-gh-skills-verified",
+      "destination": ".local/bin/topgrade-gh-skills-verified",
+      "sha256": "4cce56651d98b61e5c6fa0428831f48cfe9a6b89e6a558241da7a81c8c3ca886",
+      "mode": 448,
+      "adoptSha256": null
+    },
+    {
       "source": "bin/topgrade-gcloud-verified",
       "destination": ".local/bin/topgrade-gcloud-verified",
       "sha256": "37c0b0e084430c106b23164b9438550299d5fa96735ff2f61aee8e8fc8e057b9",
@@ -207,7 +214,7 @@
     {
       "source": "config/topgrade.toml",
       "destination": ".config/topgrade.toml",
-      "sha256": "270ed06a911a7eabf33000048a8abc6fa51999e83ed05f1590bd3aa9dcf4da9d",
+      "sha256": "a66a01ef042cd0f3dfe11c75e4df586fc9d6c7720618fd88f4ea45645632e826",
       "mode": 384,
       "adoptSha256": "27bdb0f36bd9172ac626e2f96ca19051e6327206e6e13fd734513262608d58ba"
     },

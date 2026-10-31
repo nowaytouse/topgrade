@@ -203,6 +203,12 @@
 # fetch_head = true
 
 
+[github_cli]
+# Optional executable for verified skill updates; executed directly, without a shell.
+# Leading ~ is expanded. Leave unset to use the native `gh skill update --all` command.
+# skills_updater = "~/.local/bin/topgrade-gh-skills-verified"
+
+
 [helm]
 # Optional executable for verified repository updates; executed directly, without a shell.
 # Leading ~ is expanded. Leave unset to use the native `helm repo update` command.

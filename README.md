@@ -15,7 +15,7 @@
 
 ## macOS device fork
 
-This fork tracks `topgrade-rs/topgrade` and includes a versioned [macOS device profile](profiles/macos/README.md): verified updater scripts, configuration, installation backups and rollback checks. Its Rust changes keep Helm updates single-shot and allow the profile's verified repository updater. The installation links below describe upstream distributions; use the device profile to install this fork and its companions.
+This fork tracks `topgrade-rs/topgrade` and includes a versioned [macOS device profile](profiles/macos/README.md): verified updater scripts, configuration, installation backups and rollback checks. Its Rust changes keep Helm updates single-shot and let the profile select verified Helm and GitHub CLI Skills updaters while preserving each skill's existing update owner. The installation links below describe upstream distributions; use the device profile to install this fork and its companions.
 
 The maintained companion scripts target Python 3.15 and use only its standard library. Source builds require Rust 1.95 or newer (the device updater uses Rustup Nightly); Python packaging uses maturin 1.16 or newer. Dependency versions are resolved in `Cargo.lock` and validated before deployment.
 
