@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Restore two verified npm security patches or audit an unfamiliar upstream tree."""
 import ctypes
 import hashlib

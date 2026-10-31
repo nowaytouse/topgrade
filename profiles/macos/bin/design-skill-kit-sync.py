@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Synchronize installed plugin87 skills with a complete, commit-pinned kit.
 
 Ordinary failures are rolled back, but abrupt process termination between the

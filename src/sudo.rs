@@ -232,7 +232,7 @@ impl Sudo {
                             .and_then(|k| k.get_u32("Enabled"))
                         {
                             Ok(v) => v.min(3).try_into().unwrap(),
-                            Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => on_missing,
+                            Err(e) if e.code().0 == ERROR_FILE_NOT_FOUND.to_hresult().0 => on_missing,
                             Err(e) => {
                                 // warn, but treat as normal (using sudo should error)
                                 warn!(r"Error reading registry key HKLM\{key}\Enabled: {e}");

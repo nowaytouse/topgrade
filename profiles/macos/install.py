@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Install only this audited macOS profile; default action is a read-only plan."""
 from __future__ import annotations
 import argparse
@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import tempfile
 import uuid
 
@@ -267,6 +268,9 @@ def apply(home):
                 "transaction":transaction, "rollback":"--rollback " + transaction}
 
 def main(argv=None):
+    if sys.version_info[:2] < (3, 15):
+        print("ERROR: Python 3.15 or newer is required; run this installer with python3.15.", file=sys.stderr)
+        return 1
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--apply", action="store_true")

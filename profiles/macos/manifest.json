@@ -4,7 +4,7 @@
     {
       "source": "bin/brew-headsync-upgrade",
       "destination": ".local/bin/brew-headsync-upgrade",
-      "sha256": "03e25d54209906258318fb257df6bca0a2477ba8904d36b1436d0abc6d155aeb",
+      "sha256": "bdc35c6b2f9028f7c112a14570560da1304f700e48e21d25c2d92a87e08e7e1b",
       "mode": 493,
       "adoptSha256": "03e25d54209906258318fb257df6bca0a2477ba8904d36b1436d0abc6d155aeb"
     },
@@ -18,21 +18,21 @@
     {
       "source": "bin/design-skill-kit-sync.py",
       "destination": ".local/bin/design-skill-kit-sync.py",
-      "sha256": "b8227811974335072e5703eea3fd0ae4e8dd442a9074e4c5fdbecf58cd8c2f8a",
+      "sha256": "4e4edb4dc7fbf7d872e2d832a6a19ae9857a4f03ea033cb056f07d2ba09d8a08",
       "mode": 448,
       "adoptSha256": "b8227811974335072e5703eea3fd0ae4e8dd442a9074e4c5fdbecf58cd8c2f8a"
     },
     {
       "source": "bin/normalize-gh-skill-lock.py",
       "destination": ".local/bin/normalize-gh-skill-lock.py",
-      "sha256": "42deab6fcb4aa21c9681ad3293e31b3a7ced39c1e1655de04a2ffa1680321ca2",
+      "sha256": "b5bc98ee447ba40825b3f48e75ca21cbeaab7ac8fe75878aeb8cc93b61a2f057",
       "mode": 448,
       "adoptSha256": "42deab6fcb4aa21c9681ad3293e31b3a7ced39c1e1655de04a2ffa1680321ca2"
     },
     {
       "source": "bin/npm-bundled-security-guard.py",
       "destination": ".local/bin/npm-bundled-security-guard.py",
-      "sha256": "98e2e2af9f12bb2860cdbad8f807effdda33e358d3a39b9a1e6ee7a2acbe20ff",
+      "sha256": "1841d19ba2a5faaad05a0c8e67029e3d1dd9c436f85eaa2f2dd35f4141a851ff",
       "mode": 448,
       "adoptSha256": "9aa62113bfdd9b3cbc1f00b45cc7903875debe13f8a9d5d72f22c550ae4a9bcc"
     },
@@ -46,7 +46,7 @@
     {
       "source": "bin/topgrade-cursor-native-reconcile.py",
       "destination": ".local/bin/topgrade-cursor-native-reconcile.py",
-      "sha256": "f7751c56f8a689e524d34425068bd478078516458a8f4028bf9d9d4b0b7b433d",
+      "sha256": "be7385c01edd123d3fa91616fa70b434fbd5dc309a3f8f1d64105df9e65c4a68",
       "mode": 493,
       "adoptSha256": "f7751c56f8a689e524d34425068bd478078516458a8f4028bf9d9d4b0b7b433d"
     },
@@ -60,14 +60,14 @@
     {
       "source": "bin/topgrade-helm-verified",
       "destination": ".local/bin/topgrade-helm-verified",
-      "sha256": "cd913a1bdf6b6de43650235c01decf8e4b463427c78aae5db4b56d155bd6d059",
+      "sha256": "2cced8f423c1c9651481a82ebe8d4531f366b6217aa32a7084b62f12ee6f8fa8",
       "mode": 448,
       "adoptSha256": null
     },
     {
       "source": "bin/topgrade-mas-verified",
       "destination": ".local/bin/topgrade-mas-verified",
-      "sha256": "03dacdf56ab4adaa8c5fbf2cf9901df7bf8158b9ff697628f835f6aac3ca654c",
+      "sha256": "beb5396383fcde06c471b586a64a5df9ab8c22dfa01dd2716aaafbcae0bc1761",
       "mode": 448,
       "adoptSha256": "03dacdf56ab4adaa8c5fbf2cf9901df7bf8158b9ff697628f835f6aac3ca654c"
     },
@@ -81,49 +81,49 @@
     {
       "source": "bin/topgrade-select-xcode-beta",
       "destination": ".local/bin/topgrade-select-xcode-beta",
-      "sha256": "fd4dfb12bc85642e28456b51c2ea7e49996a84c9b5ea72d87acf37caeb060124",
+      "sha256": "5cfb16e6d00f7f14c8e64b3dc2fb2b91baad5b3a99554ec2650bf0be82c43e53",
       "mode": 448,
       "adoptSha256": "fd4dfb12bc85642e28456b51c2ea7e49996a84c9b5ea72d87acf37caeb060124"
     },
     {
       "source": "bin/topgrade-skills-integrity.py",
       "destination": ".local/bin/topgrade-skills-integrity.py",
-      "sha256": "0099537bca58359847e4da7b1f5de841a2b454beed962dea399487b56b12adf9",
+      "sha256": "a0a0b7e6589346a9de0e3dad522e5724ef38ef91201ceb234c46f0145df8158e",
       "mode": 493,
       "adoptSha256": "0099537bca58359847e4da7b1f5de841a2b454beed962dea399487b56b12adf9"
     },
     {
       "source": "bin/topgrade-skills-verified.py",
       "destination": ".local/bin/topgrade-skills-verified.py",
-      "sha256": "17496124a1616a0c4e20cf06bd4d4af1d40f51b1621ff0138e8179f9f82e717a",
+      "sha256": "ba0cee63347bf15a9502edb99d7d16308c3eb79770350d3c49368a97c537e8ba",
       "mode": 448,
       "adoptSha256": "17496124a1616a0c4e20cf06bd4d4af1d40f51b1621ff0138e8179f9f82e717a"
     },
     {
       "source": "bin/update-gradle-nightly",
       "destination": ".local/bin/update-gradle-nightly",
-      "sha256": "fb3aa6e4a78e3e776f5fdb931fcf6d125657b3875d8e883a17c46998f4a6d3ca",
+      "sha256": "14da4154af7b5ccdbdb29a64607c1966b81becedb469d6e45cba147086baffab",
       "mode": 493,
       "adoptSha256": "fb3aa6e4a78e3e776f5fdb931fcf6d125657b3875d8e883a17c46998f4a6d3ca"
     },
     {
       "source": "bin/update-preview-apps",
       "destination": ".local/bin/update-preview-apps",
-      "sha256": "9013d686a74198bf74ae08398d980deff5c7a1ef4afa6767953099b9827fe15e",
+      "sha256": "3c4c9cad47af816f27ad1328f8337896b78e198c705f80817dd5c2ddec7304e8",
       "mode": 493,
       "adoptSha256": "9013d686a74198bf74ae08398d980deff5c7a1ef4afa6767953099b9827fe15e"
     },
     {
       "source": "bin/update-preview-extras",
       "destination": ".local/bin/update-preview-extras",
-      "sha256": "e27b460400caadb23c22f971ee5edea4ac3f73cfe7870c4c228c3b3ac1cfaff4",
+      "sha256": "00f155e85068950647bacd2c433a7ccb02d0c11a560c1a7cdc8a0168c5e14c9f",
       "mode": 493,
       "adoptSha256": "e27b460400caadb23c22f971ee5edea4ac3f73cfe7870c4c228c3b3ac1cfaff4"
     },
     {
       "source": "bin/update-project-deps",
       "destination": ".local/bin/update-project-deps",
-      "sha256": "2d05f25a8b883ac8ecb2cd648674a27268bd3d4ac6271cfda724397cc7bab02b",
+      "sha256": "867dee696b39334ee198c6d4f4af532ccb56ae2bf815bc1e6b61d12c15dd30a1",
       "mode": 493,
       "adoptSha256": "f9d718c4989aac106c44eed6b88d9a1388f5d0543e0cbc67e0a359495c785696"
     },
@@ -144,35 +144,35 @@
     {
       "source": "bin/update-tourbox-beta",
       "destination": ".local/bin/update-tourbox-beta",
-      "sha256": "a5c0dbc93794f75dc97d182c8af03ad0460fde8fa95777a147b32704bb5391b2",
+      "sha256": "26cf61c780b8cbf38754984109f2424b84130f3b0c4e60aecff26b8b5a518cfd",
       "mode": 493,
       "adoptSha256": "a5c0dbc93794f75dc97d182c8af03ad0460fde8fa95777a147b32704bb5391b2"
     },
     {
       "source": "bin/update-xcode-beta",
       "destination": ".local/bin/update-xcode-beta",
-      "sha256": "34728fe08efbd145e203b16c1c6b0396cb5104e75de04d308bdef67985a0a1f8",
+      "sha256": "00706c2ee6f07699cc4418d30f13993cc32f89c26f03a820440e6f962f226800",
       "mode": 493,
       "adoptSha256": "34728fe08efbd145e203b16c1c6b0396cb5104e75de04d308bdef67985a0a1f8"
     },
     {
       "source": "libexec/preview-apps/update-preview-apps.py",
       "destination": ".local/libexec/preview-apps/update-preview-apps.py",
-      "sha256": "3c3ca0be6f31e5a442f4403e0c255e2f65f37cf723a2771bfaeb79857213a2ef",
+      "sha256": "cfbada38b02d35de79763ed6722a46086a55e8bb1483e7416d8291e233891e21",
       "mode": 493,
       "adoptSha256": "3c3ca0be6f31e5a442f4403e0c255e2f65f37cf723a2771bfaeb79857213a2ef"
     },
     {
       "source": "libexec/rolling-deps/edge-extras.py",
       "destination": ".local/libexec/rolling-deps/edge-extras.py",
-      "sha256": "f5fb53aa7e22f7aa4be2095a9c5e6d2cc8a91cca34d8dd8fb49d8828ff4e6af7",
+      "sha256": "a8cb8d321ef988d8b13c1197cefd716cdf4f707cfa2a30a08505d94d25f0a161",
       "mode": 493,
       "adoptSha256": "f5fb53aa7e22f7aa4be2095a9c5e6d2cc8a91cca34d8dd8fb49d8828ff4e6af7"
     },
     {
       "source": "libexec/rolling-deps/update-gradle-nightly.real.py",
       "destination": ".local/libexec/rolling-deps/update-gradle-nightly.real.py",
-      "sha256": "c012411514b85e4609039f94a6b8a9721fc9b4b65e07c488dee56999db8a4f7d",
+      "sha256": "1b6359b778862c779aba1bdc605a1288e64f49bc0f701434d219bdae17874a6f",
       "mode": 493,
       "adoptSha256": "c012411514b85e4609039f94a6b8a9721fc9b4b65e07c488dee56999db8a4f7d"
     },

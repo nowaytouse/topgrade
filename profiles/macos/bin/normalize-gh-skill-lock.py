@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Normalize gh's namespaced lock keys to NPX names without dropping installed state.
 
 GH 2.103.3 writes InstallName to the shared Vercel v3 lock even when an update

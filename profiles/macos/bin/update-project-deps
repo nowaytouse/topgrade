@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 from __future__ import annotations
 
 import argparse
@@ -13,6 +13,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 import time
 import threading
 
@@ -629,7 +630,7 @@ def detect_surfaces(repo, edge=True):
             "Zig packages",
             root,
             ((
-                "python3",
+                sys.executable,
                 EDGE_EXTRAS,
                 "zig",
                 str(root),
@@ -697,7 +698,7 @@ def detect_surfaces(repo, edge=True):
             "Gradle",
             root,
             ((
-                "python3",
+                sys.executable,
                 EDGE_EXTRAS,
                 "gradle",
                 str(root),
@@ -843,7 +844,7 @@ def detect_surfaces(repo, edge=True):
             "Docker images",
             root,
             ((
-                "python3",
+                sys.executable,
                 EDGE_EXTRAS,
                 "docker",
                 str(root),

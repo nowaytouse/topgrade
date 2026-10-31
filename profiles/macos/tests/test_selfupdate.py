@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Exercise Topgrade release switching in a synthetic home directory."""
 
 import fcntl

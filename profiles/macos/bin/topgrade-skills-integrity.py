@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Topgrade Agent Skills coverage gate.
 
 No skill is installed, deleted, rewritten, or assigned a guessed GitHub origin.

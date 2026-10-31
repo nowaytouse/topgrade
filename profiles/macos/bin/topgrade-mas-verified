@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Topgrade MAS gate: confirm fast catalog candidates before updating."""
 
 from __future__ import annotations

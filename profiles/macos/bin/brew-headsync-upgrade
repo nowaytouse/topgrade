@@ -208,7 +208,7 @@ cp -p "$LLAMA" "$STAGE/original/llama.cpp.rb"
 cp -p "$GGML"  "$STAGE/patched/ggml.rb"
 cp -p "$LLAMA" "$STAGE/patched/llama.cpp.rb"
 
-python3 - "$STAGE/patched/ggml.rb" "$STAGE/patched/llama.cpp.rb" "$TARGET_SHA" <<'PY'
+python3.15 - "$STAGE/patched/ggml.rb" "$STAGE/patched/llama.cpp.rb" "$TARGET_SHA" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -309,7 +309,7 @@ mv "$STAGE" "$TXN_DIR"
 STAGE=""
 
 # Ensure journal data is flushed before applying changes.
-python3 - "$TXN_DIR" <<'SYNC_JOURNAL'
+python3.15 - "$TXN_DIR" <<'SYNC_JOURNAL'
 import os
 import sys
 from pathlib import Path
@@ -394,7 +394,7 @@ OUTDATED_FORMULAE=""
 RUST_DEPENDENTS=""
 if (( ${#CANDIDATE_FORMULAE[@]} > 0 )); then
     OUTDATED_FORMULAE="$(
-        python3 - "${CANDIDATE_FORMULAE[@]}" <<'OUTDATED_QUERY'
+        python3.15 - "${CANDIDATE_FORMULAE[@]}" <<'OUTDATED_QUERY'
 import json
 import subprocess
 import sys
@@ -518,7 +518,7 @@ echo "llama.cpp : $LLAMA_HEAD"
 }
 
 # Keg names use abbreviated hashes; receipts record the complete source revision.
-python3 - "$TARGET_SHA" "$GGML_OPT" "$LLAMA_OPT" <<'VERIFY_RECEIPTS'
+python3.15 - "$TARGET_SHA" "$GGML_OPT" "$LLAMA_OPT" <<'VERIFY_RECEIPTS'
 import json
 import sys
 from pathlib import Path

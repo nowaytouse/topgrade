@@ -11,7 +11,7 @@ trap 'rm -f "$tmp"' EXIT
 
 set +e
 
-"$RUN" python3 -u "$REAL" "$@" \
+"$RUN" python3.15 -u "$REAL" "$@" \
   2>&1 | tee "$tmp"
 
 rc="${PIPESTATUS[0]}"

@@ -670,15 +670,16 @@ impl VSCodeVariant {
             })
     }
 
-    fn is_running(&self) -> bool {
+    fn is_running(&self) -> Result<bool> {
         let system = System::new_with_specifics(
             RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing().with_exe(UpdateKind::Always)),
-        );
+        )
+        .wrap_err_with(|| format!("Failed to inspect running {} processes", self.name()))?;
 
-        system
+        Ok(system
             .processes()
             .values()
-            .any(|process| self.matches_process(process.name(), process.exe()))
+            .any(|process| self.matches_process(process.name(), process.exe())))
     }
 }
 
@@ -851,7 +852,7 @@ fn run_vscode_compatible(variant: VSCodeVariant, ctx: &ExecutionContext) -> Resu
         return Ok(());
     }
 
-    if variant.is_running() {
+    if variant.is_running()? {
         let message = t!(
             "{editor} is running; skipping obsolete extension cleanup",
             editor = name

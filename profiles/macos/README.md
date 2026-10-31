@@ -6,16 +6,16 @@ The 25 scripts, five TOML files and two npm security patch packages are covered 
 
 ## Review and install
 
-Use the existing Homebrew Python 3.15 (the installer requires Python 3.11 or later):
+Use the existing Homebrew Python 3.15 (the installer requires Python 3.15 or later):
 
 ```sh
-python3 profiles/macos/install.py
-python3 -m unittest discover -s profiles/macos/tests -v
+python3.15 profiles/macos/install.py
+python3.15 -m unittest discover -s profiles/macos/tests -v
 # After the reviewed fork main has been pushed, build/verify/switch its binary first:
 bash profiles/macos/bin/topgrade-rustup-headsync --dry-run
 bash profiles/macos/bin/topgrade-rustup-headsync update
-python3 profiles/macos/install.py --apply
-python3 profiles/macos/install.py --verify
+python3.15 profiles/macos/install.py --apply
+python3.15 profiles/macos/install.py --verify
 ```
 
 The default command is a **read-only plan**, including on an empty test home. `--apply` is the only installation action. It accepts only fixed destination names and verified source bytes; initial adoption of an existing file requires its recorded preimage hash. Subsequent upgrades require the previously installed bytes. A local edit, unknown existing file, symlink, special file, corrupt source or pending transaction stops deployment.
@@ -25,7 +25,7 @@ All changed files are backed up before the first replacement. Data assets instal
 The installer prints a transaction ID. To restore its previous files:
 
 ```sh
-python3 profiles/macos/install.py --rollback TRANSACTION
+python3.15 profiles/macos/install.py --rollback TRANSACTION
 ```
 
 Rollback checks all destinations and backup hashes before changing anything. It refuses to overwrite later user edits or a newer profile. Newly created files are removed only when their bytes still match that transaction; unrelated files and directories remain. Original file modes and timestamps are restored. Private journals and backups live under `~/.local/state/topgrade-macos-profile/transactions/`; never commit them. `--home /absolute/test/home` is for isolated validation.
@@ -33,6 +33,14 @@ Rollback checks all destinations and backup hashes before changing anything. It 
 This fork owns companion script source, installation and configuration through this profile. The installed `~/.local/bin` entry points are its managed runtime copies, not a second independently maintained script set. Keep these entry points because the declared configuration and transaction scripts call them. Companion profile upgrades require reviewing the fork checkout and explicitly applying this installer; a binary self-update does not silently deploy new scripts or configuration. Existing target file permissions are retained in the manifest rather than made more permissive.
 
 Installing this profile does not build or switch the Topgrade binary itself. The root workflow verifies a fork binary before switching the existing managed launcher, with its separate rollback mechanism. Do not run a second full updater while deployment or a previous update is active.
+
+## Python 3.15 runtime
+
+The owned profile contains 17 operational Python entrypoints, the installer and seven test files. They use only the Python standard library, so the profile has no pip runtime dependencies or additional dependency lockfile. The separate root Python package uses maturin only to build the Rust binary.
+
+Versioned `python3.15` launchers select the runtime explicitly; the SQLite integration retains its explicit Homebrew Python 3.15 ABI target. The four embedded HEAD-sync Python blocks and the Gradle/Preview shell forwarders also select `python3.15`. Owned Zig, Gradle and Docker helper children inherit `sys.executable`. The installer rejects Python versions below 3.15 before accessing deployment targets or creating state. This changes the fork's profile requirements, not the user's global PATH or unrelated tool environments.
+
+The CLI version report continues to report the user's actual default `python3`; it does not hide an unexpected PATH choice. Synthetic HEAD-sync fixtures provide both Python command names using the test interpreter, preserving all 30 recovery and guard cases without invoking production Homebrew.
 
 ## Existing local prerequisites
 

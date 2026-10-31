@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Reconcile Cursor-managed built-in Skills into the shared ~/.agents/skills root.
 
 Mirrors only a fixed allowlist of 26 skills with locally present Cursor native
@@ -6,7 +6,7 @@ counterparts. Preserves original directories by renaming them to a backup,
 keeps local configuration where present, and makes the existing Topgrade coverage
 check verify exact file parity. Does NOT modify ~/.cursor/skills-cursor.
 
-Usage: python3 topgrade_cursor_native_reconcile.py --apply
+Usage: python3.15 topgrade_cursor_native_reconcile.py --apply
 """
 from __future__ import annotations
 

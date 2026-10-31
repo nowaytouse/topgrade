@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Keep the Skills updater's failed source checks from becoming false success."""
 import os
 import re

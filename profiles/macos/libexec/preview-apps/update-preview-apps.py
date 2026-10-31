@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """macOS Preview Apps updater: Krita Next and manual release diagnostics.
 
 Only official release sources. No sudo, Gatekeeper bypass or silent PKG installs.

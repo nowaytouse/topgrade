@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.15
 """Exercise a HEAD-sync script using only synthetic formulae and fake commands."""
 
 import json
@@ -142,6 +142,7 @@ class Fixture:
             path.write_text(content)
             path.chmod(0o755)
         (self.bin / "python3").symlink_to(sys.executable)
+        (self.bin / "python3.15").symlink_to(sys.executable)
         self.env = {"PATH": f"{self.bin}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(self.home),
                     "XDG_STATE_HOME": str(root / "state"), "TEST_ROOT": str(root), "TEST_SHA": sha,
                     "TMPDIR": str(root), "LC_ALL": "C",
